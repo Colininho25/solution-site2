@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Demo Cadeado — Parte 2</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,'Segoe UI',sans-serif;
+  background:#0f0f1a;color:#fff;
+  padding:40px 24px 80px;min-height:100vh;
+}
+h1{font-size:20px;font-weight:800;text-align:center;margin-bottom:6px}
+.subtitle{text-align:center;color:rgba(255,255,255,.4);font-size:13px;margin-bottom:40px}
+
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:760px;margin:0 auto}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+
+.opt{
+  background:rgba(255,255,255,.035);border:2px solid rgba(255,255,255,.09);
+  border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:14px;
+  cursor:pointer;transition:border-color .2s,background .2s,transform .15s;
+}
+.opt:hover{border-color:rgba(164,102,232,.45);background:rgba(164,102,232,.06);transform:translateY(-2px)}
+.opt.selected{border-color:#A466E8;background:rgba(164,102,232,.1)}
+.opt-head{display:flex;align-items:center;justify-content:space-between}
+.opt-label{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#A466E8}
+.check{width:22px;height:22px;border-radius:50%;background:#A466E8;display:none;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+.opt.selected .check{display:flex}
+.opt-title{font-size:16px;font-weight:800;color:#fff;margin-bottom:2px}
+.opt-desc{font-size:12.5px;color:rgba(255,255,255,.42);line-height:1.6}
+
+.prev{
+  background:#07060e;border-radius:14px;height:200px;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;position:relative;flex-shrink:0;
+  perspective:600px;
+}
+.lock-wrap{position:relative;width:120px;height:120px}
+.lock-wrap img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.lock-open{opacity:0}
+
+/* fragments for G */
+.frag{
+  position:absolute;width:100%;height:100%;
+  object-fit:contain;
+  clip-path:inset(0 0 0 0);
+  pointer-events:none;
+}
+
+.play-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(164,102,232,.15);border:1px solid rgba(164,102,232,.3);
+  color:#c084fc;border-radius:8px;padding:7px 16px;
+  font-size:12px;font-weight:700;cursor:pointer;
+  transition:background .2s;font-family:inherit;margin-top:auto;
+}
+.play-btn:hover{background:rgba(164,102,232,.28)}
+</style>
+</head>
+<body>
+
+<h1>Transições do Cadeado — Parte 2</h1>
+<p class="subtitle">4 novas variações · Clique em "▶ Preview" para ver ao vivo</p>
+
+<div class="grid">
+
+  <!-- OPÇÃO D: Rotação -->
+  <div class="opt" onclick="selectOpt(this)">
+    <div class="opt-head">
+      <div class="opt-label">Opção D</div>
+      <div class="check">✓</div>
+    </div>
+    <div class="opt-title">Rotação + Troca</div>
+    <div class="opt-desc">O fechado gira 90° e some. O aberto entra girando do outro lado e trava no lugar. Sensação mecânica de destravamento real.</div>
+    <div class="prev" id="prevD">
+      <div class="lock-wrap" id="wrapD" style="transform-style:preserve-3d">
+        <img src="cadeado fechado.png" id="closedD">
+        <img src="cadeadoaberto 2.png" id="openD" class="lock-open">
+      </div>
+    </div>
+    <button class="play-btn" onclick="event.stopPropagation();playD()">▶ Preview</button>
+  </div>
+
+  <!-- OPÇÃO E: Queda Livre -->
+  <div class="opt" onclick="selectOpt(this)">
+    <div class="opt-head">
+      <div class="opt-label">Opção E</div>
+      <div class="check">✓</div>
+    </div>
+    <div class="opt-title">Queda Livre</div>
+    <div class="opt-desc">O fechado despenca com gravidade. O aberto cai do topo mais devagar e pousa com bounce. Como se a corrente tivesse quebrado.</div>
+    <div class="prev" id="prevE">
+      <div class="lock-wrap" id="wrapE">
+        <img src="cadeado fechado.png" id="closedE">
+        <img src="cadeadoaberto 2.png" id="openE" class="lock-open">
+      </div>
+    </div>
+    <button class="play-btn" onclick="event.stopPropagation();playE()">▶ Preview</button>
+  </div>
+
+  <!-- OPÇÃO F: Blur + Foco -->
+  <div class="opt" onclick="selectOpt(this)">
+    <div class="opt-head">
+      <div class="opt-label">Opção F</div>
+      <div class="check">✓</div>
+    </div>
+    <div class="opt-title">Blur + Foco</div>
+    <div class="opt-desc">O fechado vai ficando embaçado até sumir. O aberto começa borrado e vai ganhando nitidez. Sensação de resolução, de problema sendo resolvido.</div>
+    <div class="prev" id="prevF">
+      <div class="lock-wrap" id="wrapF">
+        <img src="cadeado fechado.png" id="closedF">
+        <img src="cadeadoaberto 2.png" id="openF" class="lock-open">
+      </div>
+    </div>
+    <button class="play-btn" onclick="event.stopPropagation();playF()">▶ Preview</button>
+  </div>
+
+  <!-- OPÇÃO G: Explosão -->
+  <div class="opt" onclick="selectOpt(this)">
+    <div class="opt-head">
+      <div class="opt-label">Opção G</div>
+      <div class="check">✓</div>
+    </div>
+    <div class="opt-title">Explosão de Fragmentos</div>
+    <div class="opt-desc">O fechado se parte em pedaços que voam para fora. O aberto aparece limpo no centro. O mais dramático dos sete.</div>
+    <div class="prev" id="prevG">
+      <div class="lock-wrap" id="wrapG">
+        <img src="cadeado fechado.png" id="closedG">
+        <img src="cadeadoaberto 2.png" id="openG" class="lock-open">
+        <!-- fragmentos (clones visuais com clip-path) -->
+        <div id="fragsG" style="position:absolute;inset:0;pointer-events:none;overflow:visible"></div>
+      </div>
+    </div>
+    <button class="play-btn" onclick="event.stopPropagation();playG()">▶ Preview</button>
+  </div>
+
+</div>
+
+<script>
+function selectOpt(el){
+  document.querySelectorAll('.opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function resetLock(c, o){
+  gsap.killTweensOf([c, o]);
+  gsap.set(c, {opacity:1, scale:1, y:0, x:0, rotation:0, rotationY:0, filter:'blur(0px)'});
+  gsap.set(o, {opacity:0, scale:1, y:0, x:0, rotation:0, rotationY:0, filter:'blur(0px)'});
+}
+
+/* ── D: Rotação 3D ── */
+function playD(){
+  const c = document.getElementById('closedD');
+  const o = document.getElementById('openD');
+  resetLock(c, o);
+  const tl = gsap.timeline();
+  /* shake */
+  tl.to(c, {x:-5, duration:.06, yoyo:true, repeat:5, ease:'none'}, 0)
+  /* gira e some */
+    .to(c, {rotationY:90, opacity:0, duration:.35, ease:'power2.in'}, .45)
+  /* entra do outro lado */
+    .fromTo(o, {rotationY:-90, opacity:0}, {rotationY:0, opacity:1, duration:.4, ease:'power2.out'}, .75)
+  /* float */
+    .to(o, {y:-6, duration:1.2, ease:'sine.inOut', yoyo:true, repeat:-1}, 1.2);
+}
+
+/* ── E: Queda Livre ── */
+function playE(){
+  const c = document.getElementById('closedE');
+  const o = document.getElementById('openE');
+  resetLock(c, o);
+  gsap.set(o, {y:-140, opacity:0});
+  const tl = gsap.timeline();
+  tl.to(c, {x:-5, duration:.06, yoyo:true, repeat:5, ease:'none'}, 0)
+    .to(c, {y:160, opacity:0, duration:.5, ease:'power3.in'}, .45)
+    .to(o, {y:0, opacity:1, duration:.6, ease:'bounce.out'}, .75)
+    .to(o, {y:-6, duration:1.2, ease:'sine.inOut', yoyo:true, repeat:-1}, 1.5);
+}
+
+/* ── F: Blur + Foco ── */
+function playF(){
+  const c = document.getElementById('closedF');
+  const o = document.getElementById('openF');
+  resetLock(c, o);
+  gsap.set(o, {filter:'blur(18px)', opacity:0, scale:.9});
+  const tl = gsap.timeline();
+  tl.to(c, {x:-5, duration:.06, yoyo:true, repeat:5, ease:'none'}, 0)
+    .to(c, {filter:'blur(16px)', opacity:0, scale:1.08, duration:.5, ease:'power2.in'}, .45)
+    .to(o, {filter:'blur(0px)', opacity:1, scale:1, duration:.65, ease:'power2.out'}, .75)
+    .to(o, {y:-6, duration:1.2, ease:'sine.inOut', yoyo:true, repeat:-1}, 1.5);
+}
+
+/* ── G: Explosão de fragmentos ── */
+function playG(){
+  const c = document.getElementById('closedG');
+  const o = document.getElementById('openG');
+  const container = document.getElementById('fragsG');
+  resetLock(c, o);
+  container.innerHTML = '';
+
+  /* cria 8 fragmentos com clips diferentes */
+  const clips = [
+    'inset(0 50% 50% 0)',   /* topo-esq */
+    'inset(0 0 50% 50%)',   /* topo-dir */
+    'inset(50% 50% 0 0)',   /* baixo-esq */
+    'inset(50% 0 0 50%)',   /* baixo-dir */
+    'inset(25% 25% 25% 25%)', /* centro */
+    'inset(0 25% 75% 0)',   /* canto TE */
+    'inset(75% 0 0 25%)',   /* canto BD */
+    'inset(10% 10% 10% 10%)', /* meio */
+  ];
+  const angles = [225, 315, 135, 45, 180, 270, 90, 0];
+  const frags = clips.map((clip, i) => {
+    const img = document.createElement('img');
+    img.src = 'cadeado fechado.png';
+    img.style.cssText = `position:absolute;inset:0;width:100%;height:100%;object-fit:contain;clip-path:${clip}`;
+    container.appendChild(img);
+    return img;
+  });
+
+  const tl = gsap.timeline();
+  tl.to(c, {x:-5, duration:.06, yoyo:true, repeat:5, ease:'none'}, 0)
+    .set(c, {opacity:0}, .45)
+    /* explode fragmentos */
+    .to(frags, {
+      x: (i) => Math.cos(angles[i]*Math.PI/180) * (55 + Math.random()*30),
+      y: (i) => Math.sin(angles[i]*Math.PI/180) * (55 + Math.random()*30),
+      opacity:0,
+      scale:.3,
+      rotation: (i) => (Math.random()-.5)*200,
+      duration:.6,
+      ease:'power3.out',
+      stagger:.02
+    }, .45)
+    /* aberto aparece */
+    .fromTo(o, {scale:.7, opacity:0}, {scale:1, opacity:1, duration:.45, ease:'back.out(2)'}, .55)
+    .to(o, {y:-6, duration:1.2, ease:'sine.inOut', yoyo:true, repeat:-1}, 1.1);
+}
+
+/* Auto-play ao carregar */
+window.addEventListener('load', ()=>{
+  setTimeout(()=>{ playD(); }, 400);
+  setTimeout(()=>{ playE(); }, 550);
+  setTimeout(()=>{ playF(); }, 700);
+  setTimeout(()=>{ playG(); }, 850);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,3495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solution Payments — Infraestrutura de Pagamentos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+<style>
+/* ─────────────────────────────────────────
+   RESET & TOKENS
+───────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --p:#A466E8;          /* primary purple */
+  --p2:#c084fc;         /* lighter purple  */
+  --pg:rgba(164,102,232,.6); /* purple glow */
+  --bg:#07060e;
+  --card:rgba(8,5,20,.9);
+  --border:rgba(164,102,232,.22);
+  --text-muted:rgba(255,255,255,.48);
+}
+
+html,body{
+  background:var(--bg);
+  color:#fff;
+  font-family:'Urbanist',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+/* ─────────────────────────────────────────
+   HERO SHELL
+───────────────────────────────────────── */
+.hero{
+  width:100%;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  background:
+    radial-gradient(ellipse 55% 70% at 75% 50%, rgba(50,15,100,.22) 0%, transparent 70%),
+    linear-gradient(160deg,rgba(7,6,14,.78) 0%,rgba(9,8,18,.78) 100%),
+    url('ChatGPT Image 7 de mai. de 2026, 22_58_41.png') center/cover no-repeat;
+  background-color:#07060e;
+}
+
+/* ─────────────────────────────────────────
+   HEADER / LOGO
+───────────────────────────────────────── */
+.hero-header{
+  padding:28px 64px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.logo-img{
+  height:44px;
+  display:block;
+}
+
+/* ─────────────────────────────────────────
+   BODY GRID
+───────────────────────────────────────── */
+.hero-body{
+  flex:1;
+  display:grid;
+  grid-template-columns:44% 56%;
+  align-items:center;
+  padding:0 64px 60px;
+  gap:0;
+}
+
+/* ─────────────────────────────────────────
+   LEFT PANEL
+───────────────────────────────────────── */
+.hero-left{
+  display:flex;
+  flex-direction:column;
+  gap:28px;
+  padding-right:28px;
+}
+
+.headline{
+  font-size:clamp(28px,3.1vw,48px);
+  font-weight:900;
+  line-height:1.05;
+  letter-spacing:-.025em;
+  color:#fff;
+}
+
+.subhead{
+  font-size:16px;
+  line-height:1.75;
+  color:var(--text-muted);
+  max-width:420px;
+}
+
+/* CTA button */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  background:var(--p);
+  color:#fff;
+  padding:16px 32px;
+  border-radius:8px;
+  font-size:14px;
+  font-weight:700;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  border:none;
+  cursor:pointer;
+  width:fit-content;
+  transition:background .25s,transform .25s,box-shadow .25s;
+}
+.btn:hover{
+  background:#b87ef0;
+  transform:translateY(-2px);
+  box-shadow:0 10px 32px rgba(164,102,232,.45);
+}
+
+/* Feature badges */
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+.badge{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:10px 14px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:9px;
+  font-size:13px;
+  color:rgba(255,255,255,.62);
+}
+.badge svg{color:var(--p);flex-shrink:0}
+
+/* Metrics bar */
+.metrics{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:11px;
+  overflow:hidden;
+}
+.metrics-icon{
+  padding:14px 16px;
+  border-right:1px solid rgba(255,255,255,.06);
+  display:flex;align-items:center;justify-content:center;
+}
+.metric{
+  padding:13px 15px;
+  border-right:1px solid rgba(255,255,255,.06);
+  text-align:center;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+.metric:last-child{border-right:none}
+.m-lbl{font-size:10px;color:rgba(255,255,255,.36);margin-bottom:3px}
+.m-val{font-size:19px;font-weight:700;color:var(--p)}
+.m-sub{font-size:10px;color:rgba(255,255,255,.36);margin-top:2px}
+
+/* ─────────────────────────────────────────
+   RIGHT PANEL — outer shell
+───────────────────────────────────────── */
+.hero-right{
+  position:relative;
+  height:560px;
+  overflow:visible; /* permite que glow e cards extravasem sem corte */
+}
+
+/*
+  FIXED 800×560 inner coordinate system.
+  Everything (canvas, svg, hub, cards, nodes) lives here.
+  JS scales it to fit hero-right.
+*/
+.vis-wrap{
+  position:absolute;
+  width:800px;
+  height:560px;
+  top:0;left:0;
+  transform-origin:top left;
+}
+
+/* Canvas: animated circuit board bg */
+#bg-canvas{
+  position:absolute;
+  inset:0;
+  width:800px;height:560px;
+}
+
+/* Float wrapper — contém tudo que flutua em sincronia */
+#vis-float{
+  position:absolute;
+  inset:0;
+  width:800px;height:560px;
+}
+
+/* SVG: neon lines */
+.vis-svg{
+  position:absolute;
+  inset:0;
+  width:800px;height:560px;
+  overflow:visible;
+  pointer-events:none;
+}
+
+/* ─────────────────────────────────────────
+   HUB CHIP — 450×450, center (400, 268)
+   left = 400-225 = 175, top = 268-225 = 43
+───────────────────────────────────────── */
+.hub-scene{
+  position:absolute;
+  left:175px;top:43px;
+  width:450px;height:450px;
+  z-index:20;
+}
+.hub-img{
+  width:100%;height:100%;
+  object-fit:contain;
+  /* glow pequeno para não ser cortado — ambient vem do canvas */
+  filter: drop-shadow(0 0 16px rgba(164,102,232,.95));
+  display:block;
+}
+
+/* floor glow below hub */
+.hub-floor{
+  position:absolute;
+  left:175px;top:43px;
+  width:450px;height:450px;
+  z-index:10;pointer-events:none;
+}
+.hub-floor::after{
+  content:'';
+  position:absolute;
+  width:500px;height:50px;
+  /* gradiente radial evita edge duro */
+  background:radial-gradient(ellipse at center,
+    rgba(164,102,232,.55) 0%,
+    rgba(164,102,232,.22) 45%,
+    transparent 70%);
+  border-radius:50%;
+  filter:blur(22px);
+  bottom:-5px;left:-25px;
+}
+
+/* pulse rings */
+.hub-ring{
+  position:absolute;
+  left:175px;top:43px;
+  width:450px;height:450px;
+  border:1px solid rgba(164,102,232,.45);
+  border-radius:52px;
+  z-index:19;pointer-events:none;
+  opacity:0;
+  transform-origin:225px 225px;
+}
+@keyframes ring-out{
+  0%  {transform:scale(1);  opacity:.55}
+  100%{transform:scale(2.3);opacity:0}
+}
+.hub-ring.go    {animation:ring-out 3s ease-out infinite}
+.hub-ring.go.d2 {animation-delay:1.5s}
+
+/* ─────────────────────────────────────────
+   NODES — deitados (rotateX heavy)
+───────────────────────────────────────── */
+.node{
+  position:absolute;
+  width:54px;height:54px;
+  background:rgba(8,5,20,.95);
+  border:1px solid rgba(164,102,232,.35);
+  border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;z-index:16;
+  box-shadow:
+    0 0 28px rgba(164,102,232,.35),
+    0 0 8px rgba(164,102,232,.6),
+    inset 0 1px 0 rgba(255,255,255,.08);
+  transform:perspective(260px) rotateX(52deg);
+  transform-origin:center center;
+}
+/* cx = left+27, cy = top+27 */
+.n1{left: 20px;top:241px} /* cx  47, cy 268 */
+.n2{left:720px;top:233px} /* cx 747, cy 260 */
+.n3{left:368px;top:478px} /* cx 395, cy 505 */
+.n4{left:355px;top:  5px} /* cx 382, cy  32 — acima do chip */
+
+/* ─────────────────────────────────────────
+   CARDS — glassmorphism
+───────────────────────────────────────── */
+.vis-card{
+  position:absolute;
+  background:rgba(8,5,22,.91);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:15px 18px;
+  backdrop-filter:blur(26px);
+  -webkit-backdrop-filter:blur(26px);
+  z-index:18;
+  box-shadow:
+    0 14px 44px rgba(0,0,0,.58),
+    0 0 0 1px rgba(164,102,232,.07),
+    inset 0 1px 0 rgba(255,255,255,.05);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  text-align:center;
+}
+.vc-lbl{font-size:10px;color:#fff;margin-bottom:5px;letter-spacing:.04em}
+.vc-val{font-size:18px;font-weight:700;color:#4ade80}
+.vc-sub{font-size:10px;color:#fff;margin-top:2px}
+.vc-chg{font-size:22px;font-weight:700;color:#4ade80}
+
+.vc-badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:20px;
+  font-size:11px;font-weight:600;margin-top:9px;
+}
+.b-ok {background:rgba(34,197,94,.12);color:#4ade80;border:1px solid rgba(34,197,94,.25)}
+.b-pur{background:rgba(164,102,232,.15);color:#d8b4fe;border:1px solid rgba(164,102,232,.3)}
+
+.check-circle{
+  width:28px;height:28px;
+  background:var(--p);border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:7px;
+  box-shadow:0 0 14px rgba(164,102,232,.65);
+}
+
+/* Cards: em pé e retos (sem rotateX), virados para a esquerda (rotateY negativo = lateral esquerda visível) */
+.c-vol{
+  left:35px;top:32px;min-width:168px;
+  transform:perspective(1200px) rotateY(-20deg);
+  transform-origin:center center;
+  z-index:25;
+}
+.c-apv{
+  left:540px;top:28px;min-width:182px;
+  transform:perspective(1200px) rotateY(-20deg);
+  transform-origin:center center;
+  z-index:25;
+}
+.c-pay{
+  left:28px;top:345px;min-width:195px;
+  transform:perspective(1200px) rotateY(-20deg);
+  transform-origin:center center;
+  z-index:25;
+}
+.c-rts{
+  left:534px;top:341px;min-width:185px;
+  transform:perspective(1200px) rotateY(-20deg);
+  transform-origin:center center;
+  z-index:25;
+}
+
+/* Radar ring for routes card */
+.radar-ring{
+  width:44px;height:44px;border-radius:50%;
+  border:2px solid rgba(164,102,232,.35);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;margin:10px auto 0;
+  box-shadow:0 0 10px rgba(164,102,232,.2);
+}
+.radar-ring::after{
+  content:'';
+  width:26px;height:26px;border-radius:50%;
+  border:2px solid rgba(164,102,232,.65);
+  position:absolute;
+}
+@keyframes spin-radar{to{transform:rotate(360deg)}}
+.radar-ring svg{animation:spin-radar 6s linear infinite}
+
+/* ── MOBILE CARDS (hidden on desktop) ── */
+.m-cards{display:none}
+.m-card{
+  background:rgba(8,5,22,.88);
+  border:1px solid rgba(164,102,232,.26);
+  border-radius:14px;
+  padding:13px 14px;
+  backdrop-filter:blur(26px);
+  -webkit-backdrop-filter:blur(26px);
+  box-shadow:
+    0 12px 36px rgba(0,0,0,.55),
+    0 0 22px rgba(164,102,232,.10),
+    inset 0 1px 0 rgba(255,255,255,.06);
+}
+
+/* ── MOBILE HUB GLOW (decoração central) ── */
+.m-hub-wrap{
+  display:none;
+  justify-content:center;
+  align-items:center;
+  position:relative;
+  height:100px;
+  pointer-events:none;
+}
+.m-hub-orb{
+  width:72px;height:72px;
+  border-radius:18px;
+  background:linear-gradient(145deg,#22134e 0%,#0d0b22 100%);
+  border:1px solid rgba(190,150,255,.5);
+  box-shadow:
+    0 0 40px var(--p),
+    0 0 80px rgba(164,102,232,.5),
+    inset 0 1px 0 rgba(255,255,255,.15);
+  display:flex;align-items:center;justify-content:center;
+}
+.m-hub-logo{
+  width:52px;height:32px;
+  background:url('LOGO SOLUTION.png') no-repeat left center;
+  background-size:auto 32px;
+  mix-blend-mode:screen;
+  filter:brightness(1.5) saturate(1.2);
+}
+.m-hub-ring{
+  position:absolute;
+  width:72px;height:72px;
+  border:1px solid rgba(164,102,232,.4);
+  border-radius:18px;
+  opacity:0;
+  transform-origin:center;
+}
+@keyframes m-ring-out{
+  0%  {transform:scale(1);  opacity:.45}
+  100%{transform:scale(2.6);opacity:0}
+}
+.m-hub-ring.go   {animation:m-ring-out 3s ease-out infinite}
+.m-hub-ring.go.d2{animation-delay:1.5s}
+
+/* ════════════════════════════════════════════
+   TABLET — até 1024px
+════════════════════════════════════════════ */
+@media (max-width:1024px){
+  .hero-header{padding:22px 40px}
+  .hero-body{grid-template-columns:50% 50%;padding:0 40px 48px}
+  .hero-left{gap:22px;padding-right:16px}
+  .headline{font-size:clamp(22px,2.8vw,36px)}
+}
+
+/* ════════════════════════════════════════════
+   MOBILE — até 768px
+════════════════════════════════════════════ */
+@media (max-width:768px){
+
+  /* Fundo mobile */
+  .hero{
+    background:
+      radial-gradient(ellipse 110% 40% at 50% 18%, rgba(90,20,180,.38) 0%, transparent 62%),
+      linear-gradient(180deg, rgba(7,6,14,.65) 0%, rgba(7,6,14,.90) 60%, rgba(7,6,14,.98) 100%),
+      url('mobile.png') center top / cover no-repeat;
+    background-color:#07060e;
+    min-height:100vh;
+  }
+
+  /* Header compacto */
+  .hero-header{padding:14px 18px}
+  .logo-img{height:26px}
+
+  /* Layout: coluna única */
+  .hero-body{
+    display:flex;
+    flex-direction:column;
+    padding:0;
+    gap:0;
+    align-items:stretch;
+  }
+
+  /* Dissolve o hero-left — filhos entram direto no flex do hero-body */
+  .hero-left{
+    display:contents;
+  }
+
+  /* HEADLINE — acima da animação (order 0) */
+  .headline{
+    order:0;
+    padding:22px 18px 14px;
+    font-size:clamp(17px,4.8vw,22px);
+    line-height:1.12;
+    letter-spacing:-.022em;
+    text-align:center;
+  }
+
+  /* ANIMAÇÃO — no meio (order 1) */
+  .hero-right{
+    display:block;
+    order:1;
+    width:100%;
+    height:320px;
+    overflow:hidden;
+    flex-shrink:0;
+  }
+
+  /* Oculta elementos só-desktop não usados */
+  .m-hub-wrap,.m-cards{display:none!important}
+
+  /* CONTEÚDO ABAIXO DA ANIMAÇÃO */
+  .subhead{
+    order:2;
+    padding:20px 20px 0;
+    font-size:13.5px;
+    line-height:1.6;
+    text-align:center;
+  }
+
+  #cta{
+    order:3;
+    margin:18px 20px 0;
+    width:calc(100% - 40px);
+    justify-content:center;
+    padding:15px 20px;
+    font-size:13px;
+  }
+
+  .badges{
+    order:4;
+    display:grid!important;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+    padding:16px 20px 0;
+  }
+  .badge{
+    font-size:12px;
+    padding:10px 12px;
+    gap:8px;
+    justify-content:center;
+  }
+
+  .metrics{
+    order:5;
+    grid-template-columns:repeat(3,1fr);
+    padding:0;
+    margin:18px auto 36px;
+    width:auto;
+    max-width:340px;
+    border-radius:12px;
+  }
+  .metrics-icon{display:none}
+  .metric{padding:10px 10px}
+  .m-val{font-size:13px}
+  .m-lbl{font-size:8px}
+  .m-sub{font-size:8px}
+}
+
+/* ════════════════════════════════════════════
+   MOBILE PEQUENO — até 390px
+════════════════════════════════════════════ */
+@media (max-width:390px){
+  .hero-right{height:290px}
+  .headline{font-size:clamp(15px,4.2vw,19px);padding:16px 14px 10px}
+  .subhead{padding:16px 14px 0}
+  #cta{margin:14px 14px 0;width:calc(100% - 28px)}
+  .metrics{max-width:290px;margin:14px auto 28px}
+  .m-val{font-size:14px}
+}
+
+/* ─────────────────────────────────────────
+   SECTION 2 — CINEMATIC PADLOCK STORY
+───────────────────────────────────────── */
+#s2{
+  position:relative;
+  width:100%;
+  height:100vh;
+  overflow:hidden;
+  background:#040309;
+}
+.s2-canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:0;
+  pointer-events:none;
+}
+.s2-content{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:space-between;
+  padding:40px 24px 32px;
+  overflow:hidden;
+}
+/* Title */
+.s2-title{
+  position:relative;
+  text-align:center;
+  min-height:90px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  gap:6px;
+  z-index:20;
+}
+.s2-q{
+  font-size:clamp(30px,4.5vw,58px);
+  font-weight:800;
+  color:#fff;
+  letter-spacing:-.02em;
+  line-height:1.08;
+}
+.s2-a{
+  font-size:clamp(26px,4vw,52px);
+  font-weight:800;
+  color:#fff;
+  letter-spacing:-.02em;
+  line-height:1.08;
+  opacity:0;
+}
+.s2-a span{ color:var(--p2); }
+.s2-subtitle{
+  font-size:clamp(13px,1.4vw,15px);
+  color:rgba(255,255,255,.5);
+  max-width:500px;
+  line-height:1.6;
+  opacity:0;
+  margin-top:4px;
+}
+/* Lock zone */
+.s2-lock-zone{
+  position:relative;
+  flex:1;
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
+  isolation:isolate;
+}
+/* Route lines (full width absolute) */
+.s2-routes{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  opacity:0;
+  z-index:3;
+  pointer-events:none;
+}
+/* Padlock wrapper */
+.pl-wrap{
+  position:relative;
+  z-index:10;
+  width:300px;
+  height:380px;
+}
+.pl-svg{ width:100%; height:100%; overflow:visible; }
+/* Ambient glow behind lock */
+.pl-glow-ring{
+  position:absolute;
+  top:50%;left:50%;
+  width:260px;height:260px;
+  margin:-130px 0 0 -130px;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(164,102,232,.18) 0%,transparent 70%);
+  pointer-events:none;
+  z-index:8;
+}
+/* Energy burst overlay */
+.pl-burst-wrap{
+  position:absolute;
+  top:50%;left:50%;
+  width:700px;height:700px;
+  margin:-350px 0 0 -350px;
+  opacity:0;
+  z-index:7;
+  pointer-events:none;
+}
+.pl-burst-svg{ width:100%;height:100%;overflow:visible; }
+/* Halo rings */
+.pl-halo{
+  position:absolute;
+  top:50%;left:50%;
+  border-radius:50%;
+  opacity:0;
+  pointer-events:none;
+  z-index:6;
+  transform:translate(-50%,-50%) scale(.3);
+}
+.pl-h1{ width:360px;height:360px; }
+.pl-h2{ width:510px;height:510px; }
+.pl-h3{ width:660px;height:660px; border:1px solid rgba(164,102,232,.12); }
+
+/* Spinner interno dos halos — CSS sem conflito com GSAP */
+.halo-spin{
+  position:absolute;
+  inset:0;
+  border-radius:50%;
+}
+.h1-spin{
+  border:2px solid transparent;
+  border-top:2px solid rgba(164,102,232,.95);
+  border-right:2px solid rgba(164,102,232,.55);
+  border-bottom:2px solid rgba(164,102,232,.18);
+  border-left:2px solid rgba(164,102,232,.35);
+  filter:drop-shadow(0 0 8px rgba(164,102,232,.85)) drop-shadow(0 0 20px rgba(164,102,232,.45));
+  animation:spin-h1 4s linear infinite, halo-glow 2.2s ease-in-out infinite alternate;
+}
+.h2-spin{
+  border:2px solid transparent;
+  border-bottom:2px solid rgba(164,102,232,.85);
+  border-left:2px solid rgba(164,102,232,.45);
+  border-top:2px solid rgba(164,102,232,.15);
+  border-right:2px solid rgba(164,102,232,.28);
+  filter:drop-shadow(0 0 6px rgba(164,102,232,.65)) drop-shadow(0 0 16px rgba(164,102,232,.3));
+  animation:spin-h2 7s linear infinite, halo-glow 3s ease-in-out infinite alternate;
+}
+@keyframes spin-h1  { to { transform:rotate(360deg);  } }
+@keyframes spin-h2  { to { transform:rotate(-360deg); } }
+@keyframes halo-glow{
+  from { filter:drop-shadow(0 0 4px rgba(164,102,232,.4)) drop-shadow(0 0 12px rgba(164,102,232,.2)); }
+  to   { filter:drop-shadow(0 0 14px rgba(164,102,232,.95)) drop-shadow(0 0 36px rgba(164,102,232,.55)); }
+}
+/* Feature cards — flanking the lock */
+.s2-cards-left,
+.s2-cards-right{
+  position:absolute;
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  z-index:15;
+  opacity:0;
+}
+.s2-cards-left{ right:calc(50% + 210px); }
+.s2-cards-right{ left:calc(50% + 210px); }
+.s2-fcard{
+  background:rgba(7,4,18,.82);
+  border:1px solid rgba(164,102,232,.28);
+  border-radius:14px;
+  padding:14px 18px;
+  width:195px;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  position:relative;
+  overflow:hidden;
+}
+.s2-fcard::before{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(135deg,rgba(164,102,232,.09) 0%,transparent 55%);
+  border-radius:inherit;
+}
+.s2-fcard-head{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:5px;
+}
+.s2-fcard-ico{
+  width:30px;height:30px;
+  border-radius:8px;
+  background:rgba(164,102,232,.2);
+  border:1px solid rgba(164,102,232,.38);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:14px;
+  flex-shrink:0;
+}
+.s2-fcard-name{
+  font-size:12.5px;
+  font-weight:600;
+  color:#fff;
+  line-height:1.25;
+}
+.s2-fcard-desc{
+  font-size:11px;
+  color:rgba(255,255,255,.42);
+  line-height:1.5;
+  padding-left:40px;
+}
+/* Bottom */
+.s2-bottom{
+  text-align:center;
+  opacity:0;
+  z-index:20;
+  padding:0 16px;
+}
+.s2-bh1{
+  font-size:clamp(20px,3vw,38px);
+  font-weight:800;
+  color:#fff;
+  letter-spacing:-.02em;
+  line-height:1.1;
+}
+.s2-bh2{
+  font-size:clamp(20px,3vw,38px);
+  font-weight:800;
+  color:var(--p2);
+  letter-spacing:-.02em;
+  line-height:1.1;
+  margin-bottom:10px;
+}
+.s2-bp{
+  font-size:clamp(12px,1.2vw,14px);
+  color:rgba(255,255,255,.42);
+  max-width:460px;
+  margin:0 auto 18px;
+  line-height:1.6;
+}
+.s2-cta{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  background:linear-gradient(135deg,var(--p),var(--p2));
+  color:#fff;
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:13px 34px;
+  border-radius:50px;
+  border:none;
+  cursor:pointer;
+  text-decoration:none;
+  box-shadow:0 0 32px rgba(164,102,232,.5);
+  transition:transform .2s,box-shadow .2s;
+}
+.s2-cta:hover{
+  transform:translateY(-2px);
+  box-shadow:0 0 52px rgba(164,102,232,.78);
+}
+/* Float animation for open lock */
+@keyframes lockFloat{
+  0%,100%{ transform:translateY(0px) rotate(0deg); }
+  30%    { transform:translateY(-10px) rotate(-1.2deg); }
+  65%    { transform:translateY(-5px) rotate(1deg); }
+}
+.lock-floating{
+  animation:lockFloat 3.2s ease-in-out infinite;
+}
+
+@media(max-width:900px){
+  .s2-cards-left,.s2-cards-right{ display:none; }
+  .pl-wrap{ width:220px;height:280px; }
+}
+@media(max-width:768px){
+  .s2-content{ padding:60px 16px 56px; }
+}
+@media(max-width:480px){
+  .pl-wrap{ width:180px;height:230px; }
+  .s2-content{ padding:72px 16px 68px; }
+}
+
+/* ════════════════════════════════════════════
+   SEÇÕES NOVAS — TOKENS COMPARTILHADOS
+════════════════════════════════════════════ */
+.sec-eyebrow-p{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--p);margin-bottom:16px}
+.sec-eyebrow-p2{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--p2);margin-bottom:16px}
+.sec-h2-dk{font-size:clamp(32px,4vw,52px);font-weight:900;line-height:1.05;letter-spacing:-.025em;color:#0d0b1e}
+.sec-h2-lt{font-size:clamp(32px,4vw,52px);font-weight:900;line-height:1.05;letter-spacing:-.025em;color:#fff}
+.sec-sub-dk{font-size:16px;line-height:1.75;color:rgba(13,11,30,.52);max-width:480px;margin-top:16px}
+.sec-sub-lt{font-size:16px;line-height:1.75;color:rgba(255,255,255,.44);max-width:480px;margin-top:16px}
+[data-reveal]{opacity:0;transform:translateY(30px);transition:opacity .75s cubic-bezier(.22,1,.36,1),transform .75s cubic-bezier(.22,1,.36,1)}
+[data-reveal].is-visible{opacity:1;transform:none}
+[data-reveal-d="1"]{transition-delay:.12s}
+[data-reveal-d="2"]{transition-delay:.24s}
+[data-reveal-d="3"]{transition-delay:.36s}
+[data-reveal-d="4"]{transition-delay:.48s}
+
+/* ════════════════════════════════════════════
+   S3 — SEM AVISO DE PIX (BRANCO)
+════════════════════════════════════════════ */
+#s3{background:#f9f8ff;padding:120px 0;position:relative;overflow:hidden}
+.s3-glow-tl{position:absolute;top:-240px;left:-240px;width:700px;height:700px;background:radial-gradient(circle,rgba(164,102,232,.07) 0%,transparent 68%);pointer-events:none}
+.s3-glow-br{position:absolute;bottom:-200px;right:-200px;width:640px;height:640px;background:radial-gradient(circle,rgba(164,102,232,.05) 0%,transparent 70%);pointer-events:none}
+.s3-inner{max-width:1200px;margin:0 auto;padding:0 64px;display:grid;grid-template-columns:1fr 1fr;column-gap:80px;row-gap:32px;align-items:start}
+.s3-right{display:flex;justify-content:center;align-items:center;grid-column:2;grid-row:1/3;align-self:center}
+.s3-chips{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.s3-chip{display:flex;align-items:center;gap:10px;padding:13px 16px;background:#fff;border:1px solid rgba(164,102,232,.14);border-radius:12px;font-size:13px;font-weight:600;color:#1a1530;box-shadow:0 2px 12px rgba(164,102,232,.06),0 1px 3px rgba(0,0,0,.04)}
+.s3-chip-ico{width:26px;height:26px;background:rgba(164,102,232,.1);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.s3-mock{position:relative;width:400px;height:360px}
+.s3-alert-card{position:absolute;top:0;left:0;width:340px;background:#fff;border:1.5px solid rgba(239,68,68,.2);border-radius:18px;padding:20px 22px;box-shadow:0 8px 36px rgba(0,0,0,.08);display:flex;gap:14px;align-items:flex-start;filter:blur(2.5px);opacity:.35;pointer-events:none;z-index:1}
+.s3-alert-strike{position:absolute;top:0;left:0;width:340px;pointer-events:none;z-index:2;height:100%;display:flex;align-items:center;justify-content:center}
+.s3-alert-strike::before{content:'';position:absolute;width:108%;height:3px;background:rgba(239,68,68,.6);transform:rotate(-6deg);border-radius:2px}
+.s3-alert-ico{width:38px;height:38px;background:rgba(239,68,68,.1);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:18px}
+.s3-alert-title{font-size:13px;font-weight:700;color:#ef4444;margin-bottom:5px}
+.s3-alert-body{font-size:12px;color:rgba(13,11,30,.38);line-height:1.5}
+.s3-approved-card{position:absolute;bottom:0;right:0;width:295px;background:#fff;border:1.5px solid rgba(34,197,94,.28);border-radius:22px;padding:28px 24px;box-shadow:0 24px 64px rgba(34,197,94,.1),0 4px 20px rgba(0,0,0,.06);text-align:center;z-index:5}
+.s3-check-ring{width:52px;height:52px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:0 0 28px rgba(34,197,94,.38)}
+.s3-approved-label{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#16a34a;margin-bottom:8px}
+.s3-approved-amount{font-size:28px;font-weight:900;color:#0d0b1e;letter-spacing:-.025em;margin-bottom:6px}
+.s3-approved-sub{font-size:12px;color:rgba(13,11,30,.38)}
+.s3-approved-tag{display:inline-flex;align-items:center;gap:6px;margin-top:14px;padding:5px 14px;background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.22);border-radius:20px;font-size:11px;font-weight:600;color:#16a34a}
+
+/* ─── S3 PHONE ANIMATION ─── */
+.s3-phone-stage{display:flex;flex-direction:column;align-items:center;gap:10px}
+.s3-brand-card{display:flex;align-items:center;gap:9px;padding:11px 22px;border-radius:13px;font-size:14px;font-weight:700;min-width:210px;justify-content:center;border:2px solid;transition:background .5s,border-color .5s,color .5s,opacity .4s}
+.s3-brand-card.pbc-bad{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.35);color:#dc2626}
+.s3-brand-card.pbc-good{background:rgba(164,102,232,.1);border-color:rgba(164,102,232,.45);color:var(--p)}
+.s3-pb-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;transition:background .5s,box-shadow .5s}
+.pbc-bad .s3-pb-dot{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,.7)}
+.pbc-good .s3-pb-dot{background:var(--p);box-shadow:0 0 8px rgba(164,102,232,.8)}
+.s3-pb-name{transition:opacity .32s}
+.s3-phone{width:190px;height:340px;background:#0e0e1c;border:2.5px solid;border-radius:34px;overflow:hidden;position:relative;transition:border-color .5s,box-shadow .5s;flex-shrink:0}
+.s3-phone.pbc-bad{border-color:rgba(239,68,68,.42);box-shadow:0 0 32px rgba(239,68,68,.1),0 18px 52px rgba(0,0,0,.18)}
+.s3-phone.pbc-good{border-color:rgba(164,102,232,.52);box-shadow:0 0 32px rgba(164,102,232,.2),0 18px 52px rgba(0,0,0,.18)}
+.s3-phone-bar{height:20px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;position:relative;z-index:5}
+.s3-phone-bar::before{content:'';width:52px;height:5px;background:rgba(255,255,255,.12);border-radius:3px}
+.s3-phone-screens{position:absolute;inset:0;top:20px}
+/* Alert screen */
+.s3-pscr-alert{position:absolute;inset:0;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:18px 14px 14px;gap:9px;transition:opacity .45s ease-out,transform .45s ease-out}
+.s3-pscr-ico{width:52px;height:52px;background:rgba(239,68,68,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;animation:s3ico-pulse 1.6s ease-in-out infinite}
+@keyframes s3ico-pulse{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.28)}50%{box-shadow:0 0 0 9px rgba(239,68,68,0)}}
+.s3-pscr-title{font-size:12px;font-weight:800;color:#dc2626;text-align:center;line-height:1.3}
+.s3-pscr-body{font-size:10.5px;color:rgba(0,0,0,.45);text-align:center;line-height:1.5}
+.s3-pscr-div{width:100%;height:1px;background:rgba(0,0,0,.07);flex-shrink:0}
+.s3-pscr-btn-cancel{width:100%;padding:11px 0;border-radius:11px;font-size:11.5px;font-weight:700;text-align:center;background:rgba(239,68,68,.09);border:1.5px solid rgba(239,68,68,.4);color:#dc2626;flex-shrink:0}
+.s3-pscr-btn-proc{width:100%;padding:11px 0;border-radius:11px;font-size:11.5px;font-weight:600;text-align:center;background:rgba(0,0,0,.04);border:1.5px solid rgba(0,0,0,.1);color:rgba(0,0,0,.32);flex-shrink:0}
+/* OK screen */
+.s3-pscr-ok{position:absolute;inset:0;background:linear-gradient(160deg,#08120a,#0b1e0d);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:20px;opacity:0;transition:opacity .5s ease-out}
+.s3-pscr-check{width:60px;height:60px;background:linear-gradient(135deg,#22c55e,#16a34a);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 0 28px rgba(34,197,94,.42);transform:scale(.5);transition:transform .55s cubic-bezier(.34,1.56,.64,1);margin-bottom:4px;color:#fff}
+.s3-pscr-ok-lbl{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#4ade80}
+.s3-pscr-ok-amt{font-size:24px;font-weight:900;color:#fff;letter-spacing:-.025em}
+.s3-pscr-ok-sub{font-size:10.5px;color:rgba(255,255,255,.32)}
+.s3-pscr-ok-badge{display:inline-flex;align-items:center;gap:6px;margin-top:8px;padding:5px 14px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.28);border-radius:20px;font-size:10px;font-weight:600;color:#4ade80}
+.s3-pscr-ok-blink{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:s3blink 1.2s ease-in-out infinite}
+@keyframes s3blink{0%,100%{opacity:1}50%{opacity:.2}}
+/* Status card */
+.s3-status-card{display:flex;align-items:center;gap:9px;padding:11px 22px;border-radius:13px;font-size:12.5px;font-weight:600;min-width:210px;justify-content:center;border:2px solid;transition:background .5s,border-color .5s,color .5s,opacity .4s}
+.s3-status-card.pbc-bad{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.3);color:rgba(220,38,38,.8)}
+.s3-status-card.pbc-good{background:rgba(164,102,232,.07);border-color:rgba(164,102,232,.38);color:var(--p)}
+
+/* ════════════════════════════════════════════
+   S4 — DESVIO DE VENDAS (PRETO)
+════════════════════════════════════════════ */
+#s4{background:#04030b;padding:120px 0;position:relative;overflow:hidden}
+.s4-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:900px;height:500px;background:radial-gradient(ellipse,rgba(164,102,232,.09) 0%,transparent 65%);pointer-events:none}
+.s4-inner{max-width:1200px;margin:0 auto;padding:0 64px;position:relative;z-index:1;display:grid;grid-template-columns:1fr 1.3fr;column-gap:80px;row-gap:32px;align-items:start}
+.s4-cards{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.s4-card{background:rgba(164,102,232,.05);border:1px solid rgba(164,102,232,.18);border-radius:14px;padding:18px;transition:border-color .3s,box-shadow .3s}
+.s4-card:hover{border-color:rgba(164,102,232,.42);box-shadow:0 0 28px rgba(164,102,232,.12)}
+.s4-card-ico{width:34px;height:34px;background:rgba(164,102,232,.12);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:15px}
+.s4-card-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
+.s4-card-desc{font-size:12px;color:rgba(255,255,255,.38);line-height:1.5}
+.s4-right{display:flex;align-items:center;justify-content:center;grid-column:2;grid-row:1/3;align-self:center}
+/* ── S4 linear flow ── */
+.s4-lflow-stage{position:relative;width:600px;height:268px;flex-shrink:0}
+.s4-vflow-stage{position:relative;width:300px;height:420px;flex-shrink:0;display:none}
+.s4-lflow-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.s4-nd{position:absolute;display:flex;flex-direction:column;align-items:center;gap:5px;transform:translate(-50%,-50%);z-index:10}
+.s4-nd-box{position:relative;display:flex;align-items:center;justify-content:center;border-radius:14px;border:1.5px solid rgba(164,102,232,.3);background:rgba(8,5,20,.92);box-shadow:0 0 18px rgba(164,102,232,.12),inset 0 1px 0 rgba(255,255,255,.06);transition:border-color .3s,box-shadow .3s}
+.s4-nd-lbl{font-size:10px;font-weight:700;color:rgba(255,255,255,.35);letter-spacing:.03em;white-space:nowrap}
+.s4-nd-cliente{left:56px;top:134px}
+.s4-nd-cliente .s4-nd-box{width:58px;height:58px;font-size:26px;border-radius:16px}
+.s4-nd-pix{left:227px;top:69px}
+.s4-nd-cartao{left:227px;top:134px}
+.s4-nd-boleto{left:227px;top:199px}
+.s4-nd-metodo .s4-nd-box{width:80px;height:36px;font-size:12px;font-weight:700;border-radius:10px;gap:5px;padding:0 8px;flex-direction:row}
+.s4-nd-metodo .s4-nd-box span{font-size:17px}
+.s4-nd-solution{left:403px;top:134px}
+.s4-nd-solution .s4-nd-box{width:88px;height:88px;border-radius:22px;flex-direction:column;gap:4px;border-color:rgba(164,102,232,.65);box-shadow:0 0 36px rgba(164,102,232,.32),0 0 72px rgba(164,102,232,.12),inset 0 1px 0 rgba(255,255,255,.1)}
+.s4-nd-gateway{left:542px;top:134px}
+.s4-nd-gateway .s4-nd-box{width:74px;height:74px;border-radius:18px;flex-direction:column;gap:3px;font-size:11px;font-weight:700;color:rgba(255,255,255,.65)}
+.s4-nd-gateway .s4-nd-box .s4-gw-ico{font-size:24px}
+.s4-fp{fill:none;stroke:rgba(164,102,232,.2);stroke-width:1.5;stroke-linecap:round}
+.s4-fp-glow{fill:none;stroke:rgba(164,102,232,.06);stroke-width:8;stroke-linecap:round}
+.s4-fp.active{stroke:rgba(164,102,232,.5)}
+.s4-fp-glow.active{stroke:rgba(164,102,232,.16)}
+.s4-slbl{position:absolute;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(164,102,232,.6);background:rgba(164,102,232,.07);border:1px solid rgba(164,102,232,.18);border-radius:5px;padding:2px 7px;opacity:0;transition:opacity .4s;white-space:nowrap;pointer-events:none;z-index:50}
+.s4-slbl.show{opacity:1}
+.s4-tdot{position:absolute;width:9px;height:9px;border-radius:50%;background:#c084fc;box-shadow:0 0 9px rgba(164,102,232,.9),0 0 18px rgba(164,102,232,.45);pointer-events:none;z-index:30;opacity:0;transform:translate(-50%,-50%)}
+@keyframes s4-nd-recv{0%{box-shadow:0 0 18px rgba(164,102,232,.12)}30%{box-shadow:0 0 36px rgba(164,102,232,.9),0 0 72px rgba(164,102,232,.35)}100%{box-shadow:0 0 18px rgba(164,102,232,.12)}}
+.s4-nd-box.s4-pulse{animation:s4-nd-recv .7s ease-out}
+@keyframes s4-nd-ok{0%{box-shadow:0 0 18px rgba(34,197,94,0)}30%{box-shadow:0 0 36px rgba(34,197,94,.8),0 0 72px rgba(34,197,94,.28)}100%{box-shadow:0 0 18px rgba(34,197,94,.15)}}
+.s4-nd-box.s4-confirm{animation:s4-nd-ok .7s ease-out forwards;border-color:rgba(34,197,94,.6)!important}
+.s4-gw-badge{position:absolute;top:-10px;right:-10px;width:20px;height:20px;border-radius:50%;background:#22c55e;display:flex;align-items:center;justify-content:center;font-size:11px;box-shadow:0 0 10px rgba(34,197,94,.6);opacity:0;transform:scale(.3);transition:opacity .4s,transform .4s cubic-bezier(.34,1.56,.64,1)}
+.s4-gw-badge.show{opacity:1;transform:scale(1)}
+/* ── S4 vertical nodes (mobile) ── */
+.s4-vnd-cliente{left:150px;top:55px}
+.s4-vnd-cliente .s4-nd-box{width:58px;height:58px;font-size:26px;border-radius:16px}
+.s4-vnd-pix{left:50px;top:160px}
+.s4-vnd-cartao{left:150px;top:160px}
+.s4-vnd-boleto{left:250px;top:160px}
+.s4-vnd-solution{left:150px;top:280px}
+.s4-vnd-solution .s4-nd-box{width:88px;height:88px;border-radius:22px;flex-direction:column;gap:4px;border-color:rgba(164,102,232,.65);box-shadow:0 0 36px rgba(164,102,232,.32),0 0 72px rgba(164,102,232,.12),inset 0 1px 0 rgba(255,255,255,.1)}
+.s4-vnd-gateway{left:150px;top:390px}
+.s4-vnd-gateway .s4-nd-box{width:74px;height:74px;border-radius:18px;flex-direction:column;gap:3px;font-size:11px;font-weight:700;color:rgba(255,255,255,.65)}
+
+/* ════════════════════════════════════════════
+   S5 — MAIOR APROVAÇÃO (BRANCO)
+════════════════════════════════════════════ */
+#s5{background:#f9f8ff;padding:120px 0;position:relative;overflow:hidden}
+.s5-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:900px;height:450px;background:radial-gradient(ellipse,rgba(164,102,232,.04) 0%,transparent 68%);pointer-events:none}
+.s5-inner{max-width:1200px;margin:0 auto;padding:0 64px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.s5-chips{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:32px}
+.s5-chip{display:flex;align-items:center;gap:10px;padding:13px 16px;background:#fff;border:1px solid rgba(164,102,232,.14);border-radius:12px;font-size:13px;font-weight:600;color:#1a1530;box-shadow:0 2px 12px rgba(164,102,232,.06)}
+.s5-chip-ico{width:26px;height:26px;background:rgba(164,102,232,.1);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.s5-right{display:flex;align-items:center;justify-content:center}
+.s5-dash{width:420px;background:#fff;border-radius:24px;padding:32px;box-shadow:0 24px 80px rgba(164,102,232,.09),0 4px 20px rgba(0,0,0,.05);border:1px solid rgba(164,102,232,.09)}
+.s5-dash-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.s5-dash-title{font-size:13px;font-weight:700;color:#0d0b1e}
+.s5-dash-badge{padding:4px 12px;background:rgba(164,102,232,.09);border:1px solid rgba(164,102,232,.18);border-radius:20px;font-size:11px;font-weight:700;color:var(--p)}
+.s5-bars{display:flex;align-items:flex-end;gap:8px;height:150px;margin-bottom:8px}
+.s5-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
+.s5-bar-val{font-size:10px;font-weight:700;color:var(--p);margin-bottom:4px;min-height:14px}
+.s5-bar-track{flex:1;width:100%;display:flex;align-items:flex-end}
+.s5-bar{width:100%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,rgba(164,102,232,.45) 0%,rgba(164,102,232,.1) 100%);border-top:2px solid rgba(164,102,232,.6);height:0;transition:height 1.4s cubic-bezier(.22,1,.36,1)}
+.s5-bar.hi{background:linear-gradient(180deg,var(--p) 0%,rgba(164,102,232,.35) 100%);border-top-color:var(--p);box-shadow:0 0 18px rgba(164,102,232,.38)}
+.s5-bar-lbl{font-size:10px;color:rgba(13,11,30,.36);margin-top:6px;text-align:center}
+.s5-line{border:none;border-top:1px solid rgba(164,102,232,.08);margin:18px 0}
+.s5-mrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.s5-met{text-align:center}
+.s5-mval{font-size:20px;font-weight:800;color:#0d0b1e;letter-spacing:-.02em}
+.s5-mlbl{font-size:10px;color:rgba(13,11,30,.36);margin-top:2px}
+
+/* ════════════════════════════════════════════
+   S6 — SUPORTE 24/7 (PRETO)
+════════════════════════════════════════════ */
+#s6{background:#04030b;padding:120px 0;position:relative;overflow:hidden}
+.s6-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:900px;height:500px;background:radial-gradient(ellipse,rgba(164,102,232,.08) 0%,transparent 65%);pointer-events:none}
+.s6-inner{max-width:1200px;margin:0 auto;padding:0 64px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center}
+.s6-cards{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-top:32px}
+.s6-card{background:rgba(164,102,232,.05);border:1px solid rgba(164,102,232,.18);border-radius:14px;padding:18px;transition:border-color .3s,box-shadow .3s}
+.s6-card:hover{border-color:rgba(164,102,232,.42);box-shadow:0 0 28px rgba(164,102,232,.12)}
+.s6-card-ico{width:34px;height:34px;background:rgba(164,102,232,.12);border-radius:9px;display:flex;align-items:center;justify-content:center;margin-bottom:10px;font-size:15px}
+.s6-card-name{font-size:13px;font-weight:700;color:#fff;margin-bottom:3px}
+.s6-card-desc{font-size:12px;color:rgba(255,255,255,.38);line-height:1.5}
+.s6-right{display:flex;align-items:center;justify-content:center}
+.s6-dash{width:380px;background:rgba(10,7,22,.92);border:1px solid rgba(164,102,232,.22);border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.55),0 0 40px rgba(164,102,232,.1)}
+.s6-dash-bar{background:rgba(164,102,232,.1);padding:13px 18px;display:flex;align-items:center;gap:8px;border-bottom:1px solid rgba(164,102,232,.14)}
+.s6-dot{width:9px;height:9px;border-radius:50%;background:#22c55e;box-shadow:0 0 8px rgba(34,197,94,.6);animation:pdot 2s ease-in-out infinite;flex-shrink:0}
+@keyframes pdot{0%,100%{box-shadow:0 0 8px rgba(34,197,94,.6)}50%{box-shadow:0 0 18px rgba(34,197,94,.9),0 0 28px rgba(34,197,94,.4)}}
+.s6-dash-title{font-size:13px;font-weight:700;color:#fff;flex:1}
+.s6-dash-live{font-size:11px;color:#22c55e;font-weight:600}
+.s6-dash-body{padding:18px 18px 22px}
+.s6-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.s6-stat{background:rgba(164,102,232,.07);border:1px solid rgba(164,102,232,.14);border-radius:11px;padding:13px 10px;text-align:center}
+.s6-sval{font-size:18px;font-weight:800;color:#fff}
+.s6-slbl{font-size:10px;color:rgba(255,255,255,.3);margin-top:2px}
+.s6-chat{display:flex;flex-direction:column;gap:10px}
+.s6-msg{display:flex;gap:9px;align-items:flex-start}
+.s6-msg.r{flex-direction:row-reverse}
+.s6-av{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px}
+.s6-av.ag{background:linear-gradient(135deg,var(--p),var(--p2))}
+.s6-av.cl{background:rgba(255,255,255,.08)}
+.s6-bub{max-width:195px;padding:9px 13px;border-radius:12px;font-size:12px;line-height:1.5}
+.s6-bub.ag{background:rgba(164,102,232,.14);border:1px solid rgba(164,102,232,.22);color:rgba(255,255,255,.82);border-radius:0 12px 12px 12px}
+.s6-bub.cl{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.09);color:rgba(255,255,255,.55);border-radius:12px 0 12px 12px}
+.s6-ts{font-size:10px;color:rgba(255,255,255,.22);margin-top:4px;padding:0 2px}
+.s6-ts.r{text-align:right}
+.s6-typing-wrap{display:flex;align-items:center;gap:4px;padding:9px 14px;background:rgba(164,102,232,.08);border:1px solid rgba(164,102,232,.16);border-radius:0 12px 12px 12px;min-width:54px}
+.s6-typing-wrap span{width:5px;height:5px;border-radius:50%;background:rgba(164,102,232,.6);display:inline-block;animation:s6-bounce .9s ease-in-out infinite}
+.s6-typing-wrap span:nth-child(2){animation-delay:.18s}
+.s6-typing-wrap span:nth-child(3){animation-delay:.36s}
+@keyframes s6-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+
+/* ════════════════════════════════════════════
+   S7 — PROVA SOCIAL (BRANCO)
+════════════════════════════════════════════ */
+#s7{background:#f9f8ff;padding:100px 0 0;position:relative;overflow:hidden}
+.s7-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:1100px;height:400px;background:radial-gradient(ellipse,rgba(164,102,232,.04) 0%,transparent 68%);pointer-events:none}
+.s7-inner{max-width:1200px;margin:0 auto;padding:0 64px;text-align:center}
+.s7-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:60px}
+.s7-stat{background:#fff;border:1px solid rgba(164,102,232,.1);border-radius:22px;padding:38px 20px;box-shadow:0 4px 28px rgba(164,102,232,.06),0 1px 4px rgba(0,0,0,.04);transition:transform .3s,box-shadow .3s}
+.s7-stat:hover{transform:translateY(-4px);box-shadow:0 12px 48px rgba(164,102,232,.12)}
+.s7-ico{font-size:28px;margin-bottom:16px}
+.s7-val{font-size:clamp(26px,3.2vw,40px);font-weight:900;color:#0d0b1e;letter-spacing:-.025em;line-height:1}
+.s7-val em{color:var(--p);font-style:normal}
+.s7-lbl{font-size:14px;color:rgba(13,11,30,.42);margin-top:8px;line-height:1.4}
+
+/* ── Carrossel de depoimentos ── */
+.s7-testi{margin-top:80px;position:relative;padding-bottom:100px}
+.s7-testi::before,.s7-testi::after{content:'';position:absolute;top:0;bottom:0;width:160px;z-index:10;pointer-events:none}
+.s7-testi::before{left:0;background:linear-gradient(to right,#f9f8ff 30%,transparent)}
+.s7-testi::after{right:0;background:linear-gradient(to left,#f9f8ff 30%,transparent)}
+.s7-track-wrap{overflow:hidden;padding:32px 0 40px}
+.s7-track{display:flex;gap:22px;width:max-content;animation:s7-scroll 48s linear infinite}
+.s7-track:hover{animation-play-state:paused}
+@keyframes s7-scroll{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+.s7-tcard{
+  width:288px;flex-shrink:0;
+  background:#fff;
+  border:1px solid rgba(164,102,232,.13);
+  border-radius:18px;
+  padding:24px 26px 22px;
+  box-shadow:0 6px 32px rgba(164,102,232,.08),0 1px 4px rgba(0,0,0,.04);
+  transform:rotate(var(--rot,0deg));
+  transition:transform .3s,box-shadow .3s;
+}
+.s7-tcard:hover{transform:rotate(0deg) translateY(-4px);box-shadow:0 14px 48px rgba(164,102,232,.16)}
+.s7-tquote{font-size:22px;color:var(--p);line-height:1;margin-bottom:10px;font-family:Georgia,serif}
+.s7-ttext{font-size:13px;font-weight:500;color:rgba(13,11,30,.82);line-height:1.6;margin-bottom:16px}
+.s7-tauthor{font-size:12px;font-weight:700;color:#0d0b1e}
+.s7-trole{font-size:11px;color:rgba(13,11,30,.38);margin-top:2px}
+
+/* ════════════════════════════════════════════
+   S8 — FAQ (PRETO)
+════════════════════════════════════════════ */
+#s8{background:#04030b;padding:120px 0;position:relative;overflow:hidden}
+.s8-glow{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:800px;height:600px;background:radial-gradient(ellipse,rgba(164,102,232,.06) 0%,transparent 65%);pointer-events:none}
+.s8-inner{max-width:860px;margin:0 auto;padding:0 64px}
+.s8-hd{text-align:center;margin-bottom:56px}
+.faq-list{border-top:1px solid rgba(164,102,232,.14)}
+.faq-item{border-bottom:1px solid rgba(164,102,232,.14)}
+.faq-btn{width:100%;background:none;border:none;cursor:pointer;padding:22px 0;display:flex;align-items:center;justify-content:space-between;gap:20px;text-align:left;font-family:'Urbanist',-apple-system,sans-serif}
+.faq-qtext{font-size:16px;font-weight:700;color:#fff;line-height:1.35}
+.faq-ico{width:28px;height:28px;background:rgba(164,102,232,.1);border:1px solid rgba(164,102,232,.22);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .3s,transform .3s;color:var(--p2);font-size:18px;line-height:1}
+.faq-item.open .faq-ico{background:rgba(164,102,232,.22);transform:rotate(45deg)}
+.faq-body{max-height:0;overflow:hidden;transition:max-height .42s cubic-bezier(.22,1,.36,1)}
+.faq-ans{padding:0 0 20px;font-size:15px;line-height:1.75;color:rgba(255,255,255,.42)}
+
+/* ════════════════════════════════════════════
+   S9 — CTA FINAL (BRANCO)
+════════════════════════════════════════════ */
+#s9{background:#f9f8ff;padding:140px 0;position:relative;overflow:hidden;text-align:center}
+.s9-glow-l{position:absolute;top:50%;left:-180px;transform:translateY(-50%);width:480px;height:480px;background:radial-gradient(circle,rgba(164,102,232,.07) 0%,transparent 70%);pointer-events:none}
+.s9-glow-r{position:absolute;top:50%;right:-180px;transform:translateY(-50%);width:480px;height:480px;background:radial-gradient(circle,rgba(164,102,232,.07) 0%,transparent 70%);pointer-events:none}
+.s9-inner{max-width:720px;margin:0 auto;padding:0 48px}
+.s9-h{font-size:clamp(28px,4.2vw,52px);font-weight:900;line-height:1.06;letter-spacing:-.025em;color:#0d0b1e;margin-bottom:20px}
+.s9-h em{color:var(--p);font-style:normal}
+.s9-sub{font-size:17px;line-height:1.75;color:rgba(13,11,30,.48);margin-bottom:44px}
+.s9-btn{display:inline-flex;align-items:center;gap:12px;background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;padding:18px 52px;border-radius:50px;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;border:none;cursor:pointer;font-family:'Urbanist',-apple-system,sans-serif;box-shadow:0 0 52px rgba(164,102,232,.3),0 8px 32px rgba(164,102,232,.2);transition:transform .25s,box-shadow .25s}
+.s9-btn:hover{transform:translateY(-3px);box-shadow:0 0 72px rgba(164,102,232,.55),0 12px 48px rgba(164,102,232,.35)}
+
+/* ════════════════════════════════════════════
+   FOOTER (PRETO)
+════════════════════════════════════════════ */
+/* ── Faixa promocional ── */
+.promo-bar{background:#7c3aed;padding:16px 64px;display:flex;align-items:center;justify-content:center;gap:24px}
+.promo-bar-text{font-size:13px;font-weight:600;color:#fff;line-height:1.5;max-width:640px}
+.promo-bar-btn{flex-shrink:0;background:#fff;color:#7c3aed;font-size:12px;font-weight:700;padding:11px 24px;border-radius:50px;text-decoration:none;white-space:nowrap;transition:transform .2s,box-shadow .2s}
+.promo-bar-btn:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,.18)}
+#site-footer{background:#07060e;border-top:1px solid rgba(255,255,255,.07)}
+.footer-main{max-width:1200px;margin:0 auto;padding:64px 64px 56px;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:48px}
+.footer-brand{}
+.footer-logo{height:40px;display:block;margin-bottom:20px}
+.footer-desc{font-size:13px;color:rgba(255,255,255,.38);line-height:1.7;max-width:240px;margin-bottom:20px}
+.footer-status{display:flex;align-items:center;gap:7px;font-size:12px;color:rgba(255,255,255,.4)}
+.footer-status-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;box-shadow:0 0 7px rgba(34,197,94,.7);flex-shrink:0}
+.footer-col-title{font-size:13px;font-weight:700;color:#fff;margin-bottom:18px;letter-spacing:.01em}
+.footer-col-links{display:flex;flex-direction:column;gap:13px}
+.footer-col-link{font-size:13px;color:rgba(255,255,255,.35);text-decoration:none;transition:color .2s;width:fit-content}
+.footer-col-link:hover{color:rgba(255,255,255,.75)}
+.footer-bottom{border-top:1px solid rgba(255,255,255,.07);padding:22px 64px;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.footer-copy{font-size:12px;color:rgba(255,255,255,.22)}
+.footer-cnpj{font-size:12px;color:rgba(255,255,255,.18)}
+
+/* ════════════════════════════════════════════
+   RESPONSIVO — NOVAS SEÇÕES
+════════════════════════════════════════════ */
+@media(max-width:1024px){
+  .s3-inner,.s5-inner,.s6-inner{gap:48px;padding:0 40px}
+  .s4-inner{column-gap:60px;row-gap:28px;padding:0 40px}
+  .s7-inner,.s8-inner{padding:0 40px}
+  .footer-main{padding:48px 40px 40px;grid-template-columns:1fr 1fr}
+  .footer-bottom{padding:18px 40px}
+  .s4-lflow-stage{transform:scale(0.73);transform-origin:center top;margin-bottom:-72px}
+  .s5-dash{width:100%}
+}
+@media(max-width:768px){
+  .s3-inner,.s4-inner,.s5-inner,.s6-inner{grid-template-columns:1fr;column-gap:0;row-gap:32px;padding:0 20px}
+  .s7-inner,.s8-inner{padding:0 20px}
+  .s9-inner{padding:0 20px}
+  .promo-bar{padding:10px 14px;gap:10px;justify-content:space-between}
+  .promo-bar-text{font-size:8px;line-height:1.38}
+  .promo-bar-btn{font-size:9.5px;padding:7px 12px;white-space:nowrap}
+  .footer-main{padding:40px 20px 32px;grid-template-columns:1fr 1fr;gap:32px}
+  .footer-brand{grid-column:1/-1}
+  .footer-bottom{padding:16px 20px;flex-direction:column;text-align:center;gap:6px}
+  #s3,#s4,#s5,#s6,#s8{padding:80px 0}
+  #s7{padding:72px 0 0}
+  #s9{padding:96px 0}
+  .s3-chips,.s5-chips,.s4-cards,.s6-cards{grid-template-columns:1fr}
+  .s7-stats{grid-template-columns:1fr 1fr}
+  .s7-testi::before,.s7-testi::after{width:48px}
+  .s7-tcard{width:240px}
+  .s3-mock{width:100%;height:300px;max-width:380px;margin:0 auto}
+  .s3-alert-card{width:88%}
+  .s3-alert-strike{width:88%}
+  .s5-dash{width:100%;max-width:420px}
+  .s6-dash{width:100%;max-width:380px}
+  /* S3: reordenar — headline → phone → chips */
+  .s3-left-top{order:1}
+  .s3-right{order:2;grid-column:auto;grid-row:auto;align-self:auto}
+  .s3-chips{order:3}
+  /* S4: reordenar — headline → animação → cards */
+  .s4-left-top{order:1}
+  .s4-right{order:2;grid-column:auto;grid-row:auto;align-self:auto}
+  .s4-cards{order:3}
+  /* S4: trocar stage horizontal por vertical */
+  .s4-lflow-stage{display:none}
+  .s4-vflow-stage{display:block}
+  /* S4: gap entre animação e cards no mobile */
+  .s4-right{margin-bottom:48px}
+  .s9-btn{width:100%;justify-content:center;padding:18px 32px}
+}
+@media(max-width:480px){
+  .s7-stats{grid-template-columns:1fr 1fr}
+  .s5-dash{padding:22px}
+  .s9-h{font-size:26px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     HERO
+═══════════════════════════════════════ -->
+<!-- Faixa promocional -->
+<div class="promo-bar">
+  <p class="promo-bar-text">Infraestrutura de pagamentos que aumenta sua aprovação, estabiliza sua operação e cresce com você.</p>
+  <a href="https://wa.me/5547968711856" target="_blank" rel="noopener" class="promo-bar-btn">Falar com o time →</a>
+</div>
+
+<section class="hero">
+
+  <!-- HEADER -->
+  <header class="hero-header">
+    <img src="LOGO SOLUTION.png" alt="Solution Payments" class="logo-img">
+  </header>
+
+  <div class="hero-body">
+
+    <!-- ── LEFT ── -->
+    <div class="hero-left">
+
+      <h1 class="headline" id="hd">
+        Infraestrutura de Pagamentos<br>para Operações que Escalam
+      </h1>
+
+      <p class="subhead" id="sb">
+        Múltiplas rotas, alta estabilidade, suporte contínuo e estrutura preparada para grandes operações.
+      </p>
+
+      <a href="https://wa.me/5547968711856" target="_blank" rel="noopener" class="btn" id="cta">FALE COM NOSSO TIME</a>
+
+      <div class="badges" id="badges">
+        <div class="badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          Alta Estabilidade
+        </div>
+        <div class="badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+          Múltiplas Rotas
+        </div>
+        <div class="badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Segurança Avançada
+        </div>
+        <div class="badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/>
+            <path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+          </svg>
+          Suporte 24/7
+        </div>
+        <div class="badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+          Alta Aprovação
+        </div>
+        <div class="badge">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Saque D+0
+        </div>
+      </div>
+
+      <div class="metrics" id="metrics" style="opacity:0">
+        <div class="metric">
+          <div class="m-lbl">Transações processadas</div>
+          <div class="m-val" id="met-txn">+0mil</div>
+          <div class="m-sub">últimos 30 dias</div>
+        </div>
+        <div class="metric">
+          <div class="m-lbl">Taxa de aprovação</div>
+          <div class="m-val" id="met-apv">0%</div>
+          <div class="m-sub">média</div>
+        </div>
+        <div class="metric">
+          <div class="m-lbl">Rotas ativas</div>
+          <div class="m-val" id="met-rts">0</div>
+          <div class="m-sub">nominais</div>
+        </div>
+      </div>
+
+    </div><!-- /.hero-left -->
+
+    <!-- ── RIGHT ── -->
+    <div class="hero-right" id="hero-right">
+      <div class="vis-wrap" id="vis-wrap">
+
+        <!-- Canvas: animated bg -->
+        <canvas id="bg-canvas" width="800" height="560"></canvas>
+
+        <!-- vis-float: tudo que flutua junto — SVG + chip + nodes + cards -->
+        <div id="vis-float">
+
+        <!-- SVG: neon connection lines
+             Hub center = (400, 268) | chip 450px
+             lines-group move junto com vis-hub no float
+        -->
+        <svg class="vis-svg" viewBox="0 0 800 560" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="dg">
+              <stop offset="0%" stop-color="#f5ecff"/>
+              <stop offset="100%" stop-color="#A466E8"/>
+            </radialGradient>
+          </defs>
+
+          <!-- lines-group: animado em sync com #vis-hub -->
+          <g id="lines-group">
+
+          <!-- l1 → n1 esquerda — curva: sag para baixo no meio -->
+          <g class="lg" id="l1">
+            <path d="M400,268 C330,308 182,308 47,268" fill="none" stroke="#A466E8" stroke-width="28" stroke-opacity=".05"/>
+            <path d="M400,268 C330,308 182,308 47,268" fill="none" stroke="#A466E8" stroke-width="12" stroke-opacity=".18"/>
+            <path d="M400,268 C330,308 182,308 47,268" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-opacity=".92"/>
+            <path d="M400,268 C330,308 182,308 47,268" fill="none" stroke="#f3e8ff" stroke-width="1"   stroke-opacity=".96"/>
+          </g>
+
+          <!-- l2 → c-vol fundo — curva: arco para fora -->
+          <g class="lg" id="l2">
+            <path d="M400,268 C342,268 205,210 119,137" fill="none" stroke="#A466E8" stroke-width="28" stroke-opacity=".05"/>
+            <path d="M400,268 C342,268 205,210 119,137" fill="none" stroke="#A466E8" stroke-width="12" stroke-opacity=".18"/>
+            <path d="M400,268 C342,268 205,210 119,137" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-opacity=".92"/>
+            <path d="M400,268 C342,268 205,210 119,137" fill="none" stroke="#f3e8ff" stroke-width="1"   stroke-opacity=".96"/>
+          </g>
+
+          <!-- l3 → c-apv fundo — curva: arco para fora -->
+          <g class="lg" id="l3">
+            <path d="M400,268 C455,268 580,207 631,133" fill="none" stroke="#A466E8" stroke-width="28" stroke-opacity=".05"/>
+            <path d="M400,268 C455,268 580,207 631,133" fill="none" stroke="#A466E8" stroke-width="12" stroke-opacity=".18"/>
+            <path d="M400,268 C455,268 580,207 631,133" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-opacity=".92"/>
+            <path d="M400,268 C455,268 580,207 631,133" fill="none" stroke="#f3e8ff" stroke-width="1"   stroke-opacity=".96"/>
+          </g>
+
+          <!-- l4 → n2 direita — curva: sag para baixo no meio -->
+          <g class="lg" id="l4">
+            <path d="M400,268 C472,308 618,304 747,260" fill="none" stroke="#A466E8" stroke-width="28" stroke-opacity=".05"/>
+            <path d="M400,268 C472,308 618,304 747,260" fill="none" stroke="#A466E8" stroke-width="12" stroke-opacity=".18"/>
+            <path d="M400,268 C472,308 618,304 747,260" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-opacity=".92"/>
+            <path d="M400,268 C472,308 618,304 747,260" fill="none" stroke="#f3e8ff" stroke-width="1"   stroke-opacity=".96"/>
+          </g>
+
+          <!-- l5 → c-rts — curva: vai para direita depois desce -->
+          <g class="lg" id="l5">
+            <path d="M400,268 C494,265 618,286 621,341" fill="none" stroke="#A466E8" stroke-width="28" stroke-opacity=".05"/>
+            <path d="M400,268 C494,265 618,286 621,341" fill="none" stroke="#A466E8" stroke-width="12" stroke-opacity=".18"/>
+            <path d="M400,268 C494,265 618,286 621,341" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-opacity=".92"/>
+            <path d="M400,268 C494,265 618,286 621,341" fill="none" stroke="#f3e8ff" stroke-width="1"   stroke-opacity=".96"/>
+          </g>
+
+          <!-- l6 → c-pay — curva: vai para esquerda depois desce -->
+          <g class="lg" id="l6">
+            <path d="M400,268 C312,265 158,287 127,345" fill="none" stroke="#A466E8" stroke-width="28" stroke-opacity=".05"/>
+            <path d="M400,268 C312,265 158,287 127,345" fill="none" stroke="#A466E8" stroke-width="12" stroke-opacity=".18"/>
+            <path d="M400,268 C312,265 158,287 127,345" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-opacity=".92"/>
+            <path d="M400,268 C312,265 158,287 127,345" fill="none" stroke="#f3e8ff" stroke-width="1"   stroke-opacity=".96"/>
+          </g>
+
+          <!-- l7 → n3 baixo — leve S -->
+          <g class="lg" id="l7">
+            <path d="M400,268 C418,372 378,452 395,505" fill="none" stroke="#A466E8" stroke-width="28" stroke-opacity=".05"/>
+            <path d="M400,268 C418,372 378,452 395,505" fill="none" stroke="#A466E8" stroke-width="12" stroke-opacity=".18"/>
+            <path d="M400,268 C418,372 378,452 395,505" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-opacity=".92"/>
+            <path d="M400,268 C418,372 378,452 395,505" fill="none" stroke="#f3e8ff" stroke-width="1"   stroke-opacity=".96"/>
+          </g>
+
+          <!-- l8 → n4 acima do chip — curva suave para cima -->
+          <g class="lg" id="l8">
+            <path d="M400,268 C408,190 392,100 382,32" fill="none" stroke="#A466E8" stroke-width="28" stroke-opacity=".05"/>
+            <path d="M400,268 C408,190 392,100 382,32" fill="none" stroke="#A466E8" stroke-width="12" stroke-opacity=".18"/>
+            <path d="M400,268 C408,190 392,100 382,32" fill="none" stroke="#c084fc" stroke-width="2.5" stroke-opacity=".92"/>
+            <path d="M400,268 C408,190 392,100 382,32" fill="none" stroke="#f3e8ff" stroke-width="1"   stroke-opacity=".96"/>
+          </g>
+
+          <!-- 8 dots — um por linha -->
+          <circle id="da" r="4.5" fill="url(#dg)" opacity="0"/>
+          <circle id="db" r="4.5" fill="url(#dg)" opacity="0"/>
+          <circle id="dc" r="4.5" fill="url(#dg)" opacity="0"/>
+          <circle id="dd" r="4.5" fill="url(#dg)" opacity="0"/>
+          <circle id="de" r="4.5" fill="url(#dg)" opacity="0"/>
+          <circle id="df" r="4.5" fill="url(#dg)" opacity="0"/>
+          <circle id="dg2" r="4.5" fill="url(#dg)" opacity="0"/>
+          <circle id="dh" r="4.5" fill="url(#dg)" opacity="0"/>
+
+          </g><!-- /lines-group -->
+        </svg>
+
+        <!-- Hub pulse rings -->
+        <div class="hub-ring"    id="hr1"></div>
+        <div class="hub-ring d2" id="hr2"></div>
+
+        <!-- Hub floor glow -->
+        <div class="hub-floor"></div>
+
+        <!-- Hub chip -->
+        <div class="hub-scene" id="vis-hub">
+          <img src="chip.png" class="hub-img" id="hub-img" alt="">
+        </div>
+
+        <!-- Nodes -->
+        <div class="node n1" id="vn1">🏛</div>
+        <div class="node n2" id="vn2">🏦</div>
+        <div class="node n3" id="vn3">🌐</div>
+        <div class="node n4" id="vn4">💳</div>
+
+        <!-- ── CARDS ── -->
+
+        <!-- Volume de Transações (top-left area) -->
+        <div class="vis-card c-vol" id="vc-vol">
+          <div class="vc-lbl">Volume de Transações</div>
+          <div class="vc-chg" id="vol-pct">+0%</div>
+          <div class="vc-sub">vs último período</div>
+          <svg width="148" height="36" viewBox="0 0 148 36" style="margin-top:9px;display:block">
+            <defs>
+              <linearGradient id="lcg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#A466E8" stop-opacity=".55"/>
+                <stop offset="100%" stop-color="#A466E8" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <path id="chart-line"
+                  d="M0,36 L18,36 L36,36 L55,36 L74,36 L92,36 L110,36 L129,36 L148,36"
+                  fill="none" stroke="#A466E8" stroke-width="2" stroke-linejoin="round"
+                  stroke-linecap="round"/>
+            <path id="chart-fill"
+                  d="M0,36 L18,36 L36,36 L55,36 L74,36 L92,36 L110,36 L129,36 L148,36 L148,36 L0,36Z"
+                  fill="url(#lcg)"/>
+          </svg>
+        </div>
+
+        <!-- Transação Aprovada (top-right) -->
+        <div class="vis-card c-apv" id="vc-apv">
+          <div class="check-circle">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+          </div>
+          <div class="vc-lbl">Transação Aprovada</div>
+          <div class="vc-val" id="apv-val">R$ 0,00</div>
+          <div class="vc-sub">Cartão de Crédito</div>
+          <div class="vc-badge b-pur">Aprovado</div>
+        </div>
+
+        <!-- Pagamento Autorizado (bottom-left) -->
+        <div class="vis-card c-pay" id="vc-pay">
+          <div class="vc-lbl">Pagamento Autorizado</div>
+          <div class="vc-val" id="pay-val">R$ 0,00</div>
+          <div class="vc-sub">PIX · 10:42:31</div>
+          <div class="vc-badge b-ok">✓ Sucesso</div>
+        </div>
+
+        <!-- Rotas Inteligentes (bottom-right) -->
+        <div class="vis-card c-rts" id="vc-rts">
+          <div class="vc-lbl">Rotas Inteligentes</div>
+          <div style="display:flex;align-items:baseline;justify-content:center;gap:5px;margin-top:2px">
+            <span id="rts-num" style="font-size:22px;font-weight:700;color:#4ade80">0</span>
+            <span style="font-size:11px;color:#fff">rotas ativas</span>
+          </div>
+          <div class="vc-sub">+12 otimizadas</div>
+          <div class="radar-ring">
+            <svg width="44" height="44" viewBox="0 0 44 44">
+              <circle cx="22" cy="22" r="14" fill="none" stroke="rgba(164,102,232,.22)" stroke-width="2"/>
+              <circle cx="22" cy="22" r="14" fill="none" stroke="#A466E8" stroke-width="2"
+                      stroke-dasharray="52 36" stroke-dashoffset="0" stroke-linecap="round"/>
+              <circle cx="22" cy="22" r="7" fill="none" stroke="rgba(164,102,232,.4)" stroke-width="1.5"/>
+            </svg>
+          </div>
+        </div>
+
+        </div><!-- #vis-float -->
+      </div><!-- .vis-wrap -->
+    </div><!-- .hero-right -->
+
+  </div><!-- .hero-body -->
+</section>
+
+<!-- ═══════════════════════════════════════
+     SECTION 2 — CINEMATIC PADLOCK STORY
+════════════════════════════════════════ -->
+<section id="s2">
+  <canvas class="s2-canvas" id="s2c"></canvas>
+
+  <div class="s2-content">
+
+    <!-- TITLE AREA -->
+    <div class="s2-title">
+      <h2 class="s2-q" id="s2-q">Dinheiro bloqueado?</h2>
+      <h2 class="s2-a" id="s2-a">Não na <span>Solution Payments.</span></h2>
+      <p class="s2-subtitle" id="s2-sub">Liquidez e estabilidade para operações que precisam continuar rodando.</p>
+    </div>
+
+    <!-- LOCK ZONE -->
+    <div class="s2-lock-zone">
+
+      <!-- Full-width route lines (activate on unlock) -->
+      <svg class="s2-routes" id="s2-routes" viewBox="0 0 1400 600" preserveAspectRatio="xMidYMid slice">
+        <!-- Neon tube: 4 stroke layers per route (glow wide → glow med → core → bright) -->
+
+        <!-- Layer 1: outer glow 28px -->
+        <g fill="none" stroke="#A466E8" stroke-opacity=".05" stroke-width="28" stroke-linecap="round">
+          <path class="rg1" d="M700,300 C620,260 480,230 300,215 C180,205 80,202 0,200"         stroke-dasharray="900" stroke-dashoffset="900"/>
+          <path class="rg2" d="M700,300 C640,340 520,375 370,400 C220,422 100,430 0,432"         stroke-dasharray="850" stroke-dashoffset="850"/>
+          <path class="rg3" d="M700,300 C780,260 920,230 1100,215 C1220,205 1320,202 1400,200"   stroke-dasharray="900" stroke-dashoffset="900"/>
+          <path class="rg4" d="M700,300 C760,340 880,375 1030,400 C1180,422 1300,430 1400,432"   stroke-dasharray="850" stroke-dashoffset="850"/>
+          <path class="rg5" d="M700,300 C660,215 570,155 440,120 C340,92 210,80 80,75"           stroke-dasharray="750" stroke-dashoffset="750"/>
+          <path class="rg6" d="M700,300 C740,215 830,155 960,120 C1060,92 1190,80 1320,75"       stroke-dasharray="750" stroke-dashoffset="750"/>
+        </g>
+        <!-- Layer 2: mid glow 12px -->
+        <g fill="none" stroke="#A466E8" stroke-opacity=".18" stroke-width="12" stroke-linecap="round">
+          <path class="rg1" d="M700,300 C620,260 480,230 300,215 C180,205 80,202 0,200"         stroke-dasharray="900" stroke-dashoffset="900"/>
+          <path class="rg2" d="M700,300 C640,340 520,375 370,400 C220,422 100,430 0,432"         stroke-dasharray="850" stroke-dashoffset="850"/>
+          <path class="rg3" d="M700,300 C780,260 920,230 1100,215 C1220,205 1320,202 1400,200"   stroke-dasharray="900" stroke-dashoffset="900"/>
+          <path class="rg4" d="M700,300 C760,340 880,375 1030,400 C1180,422 1300,430 1400,432"   stroke-dasharray="850" stroke-dashoffset="850"/>
+          <path class="rg5" d="M700,300 C660,215 570,155 440,120 C340,92 210,80 80,75"           stroke-dasharray="750" stroke-dashoffset="750"/>
+          <path class="rg6" d="M700,300 C740,215 830,155 960,120 C1060,92 1190,80 1320,75"       stroke-dasharray="750" stroke-dashoffset="750"/>
+        </g>
+        <!-- Layer 3: core 2.5px -->
+        <g fill="none" stroke="#c084fc" stroke-opacity=".92" stroke-width="2.5" stroke-linecap="round">
+          <path class="rg1" d="M700,300 C620,260 480,230 300,215 C180,205 80,202 0,200"         stroke-dasharray="900" stroke-dashoffset="900"/>
+          <path class="rg2" d="M700,300 C640,340 520,375 370,400 C220,422 100,430 0,432"         stroke-dasharray="850" stroke-dashoffset="850"/>
+          <path class="rg3" d="M700,300 C780,260 920,230 1100,215 C1220,205 1320,202 1400,200"   stroke-dasharray="900" stroke-dashoffset="900"/>
+          <path class="rg4" d="M700,300 C760,340 880,375 1030,400 C1180,422 1300,430 1400,432"   stroke-dasharray="850" stroke-dashoffset="850"/>
+          <path class="rg5" d="M700,300 C660,215 570,155 440,120 C340,92 210,80 80,75"           stroke-dasharray="750" stroke-dashoffset="750"/>
+          <path class="rg6" d="M700,300 C740,215 830,155 960,120 C1060,92 1190,80 1320,75"       stroke-dasharray="750" stroke-dashoffset="750"/>
+        </g>
+        <!-- Layer 4: bright 1px -->
+        <g fill="none" stroke="#f3e8ff" stroke-opacity=".96" stroke-width="1" stroke-linecap="round">
+          <path class="rg1" d="M700,300 C620,260 480,230 300,215 C180,205 80,202 0,200"         stroke-dasharray="900" stroke-dashoffset="900"/>
+          <path class="rg2" d="M700,300 C640,340 520,375 370,400 C220,422 100,430 0,432"         stroke-dasharray="850" stroke-dashoffset="850"/>
+          <path class="rg3" d="M700,300 C780,260 920,230 1100,215 C1220,205 1320,202 1400,200"   stroke-dasharray="900" stroke-dashoffset="900"/>
+          <path class="rg4" d="M700,300 C760,340 880,375 1030,400 C1180,422 1300,430 1400,432"   stroke-dasharray="850" stroke-dashoffset="850"/>
+          <path class="rg5" d="M700,300 C660,215 570,155 440,120 C340,92 210,80 80,75"           stroke-dasharray="750" stroke-dashoffset="750"/>
+          <path class="rg6" d="M700,300 C740,215 830,155 960,120 C1060,92 1190,80 1320,75"       stroke-dasharray="750" stroke-dashoffset="750"/>
+        </g>
+        <!-- Traveling dots along routes -->
+        <circle id="rd1" r="4" fill="rgba(240,220,255,.95)" opacity="0"/>
+        <circle id="rd2" r="4" fill="rgba(240,220,255,.95)" opacity="0"/>
+        <circle id="rd3" r="4" fill="rgba(240,220,255,.95)" opacity="0"/>
+        <circle id="rd4" r="4" fill="rgba(240,220,255,.95)" opacity="0"/>
+        <circle id="rd5" r="4" fill="rgba(240,220,255,.95)" opacity="0"/>
+        <circle id="rd6" r="4" fill="rgba(240,220,255,.95)" opacity="0"/>
+      </svg>
+
+      <!-- LEFT CARDS -->
+      <div class="s2-cards-left" id="s2-cl">
+        <div class="s2-fcard">
+          <div class="s2-fcard-head">
+            <div class="s2-fcard-ico">💸</div>
+            <div class="s2-fcard-name">Saque D+0</div>
+          </div>
+          <div class="s2-fcard-desc">Disponibilidade no mesmo dia.</div>
+        </div>
+        <div class="s2-fcard">
+          <div class="s2-fcard-head">
+            <div class="s2-fcard-ico">⚡</div>
+            <div class="s2-fcard-name">Liquidez Operacional</div>
+          </div>
+          <div class="s2-fcard-desc">Dinheiro disponível quando você precisa.</div>
+        </div>
+      </div>
+
+      <!-- PADLOCK -->
+      <div class="pl-wrap">
+        <div class="pl-glow-ring" id="pl-gr"></div>
+
+        <!-- Halo rings — inner div gira via CSS, outer controlado por GSAP (opacity/scale) -->
+        <div class="pl-halo pl-h1" id="pl-h1"><div class="halo-spin h1-spin"></div></div>
+        <div class="pl-halo pl-h2" id="pl-h2"><div class="halo-spin h2-spin"></div></div>
+        <div class="pl-halo pl-h3" id="pl-h3"></div>
+
+        <!-- Energy burst (fires on unlock) -->
+        <div class="pl-burst-wrap" id="pl-burst">
+          <svg class="pl-burst-svg" viewBox="0 0 700 700">
+            <defs>
+              <radialGradient id="bGrad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%"   stop-color="rgba(192,132,252,1)"/>
+                <stop offset="30%"  stop-color="rgba(164,102,232,.6)"/>
+                <stop offset="100%" stop-color="transparent"/>
+              </radialGradient>
+            </defs>
+            <circle id="bc" cx="350" cy="350" r="0" fill="url(#bGrad)" opacity="0"/>
+            <g id="br" stroke="rgba(192,132,252,.7)" stroke-width="1.8" opacity="0">
+              <line x1="350" y1="350" x2="350" y2="30"/>
+              <line x1="350" y1="350" x2="350" y2="670"/>
+              <line x1="350" y1="350" x2="30"  y2="350"/>
+              <line x1="350" y1="350" x2="670" y2="350"/>
+              <line x1="350" y1="350" x2="100" y2="100"/>
+              <line x1="350" y1="350" x2="600" y2="600"/>
+              <line x1="350" y1="350" x2="600" y2="100"/>
+              <line x1="350" y1="350" x2="100" y2="600"/>
+              <line x1="350" y1="350" x2="200" y2="30"/>
+              <line x1="350" y1="350" x2="500" y2="670"/>
+              <line x1="350" y1="350" x2="670" y2="200"/>
+              <line x1="350" y1="350" x2="30"  y2="500"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- PADLOCK IMAGES -->
+        <img id="pl-closed" src="cadeado fechado.png"
+             style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:11;"/>
+        <img id="pl-open"   src="cadeadoaberto 2.png"
+             style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:11;opacity:0;"/>
+
+        <!-- FRAGMENTOS (explosão G) -->
+        <div id="pl-frags" style="position:absolute;inset:0;pointer-events:none;z-index:12;overflow:visible;"></div>
+
+        <!-- MONEY PARTICLES (spawned by JS) -->
+        <div id="pl-money" style="position:absolute;inset:0;pointer-events:none;z-index:20;overflow:visible;"></div>
+
+        <!-- (legacy SVG defs kept for gradient/filter IDs used in burst) -->
+        <svg style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true">
+          <defs>
+            <linearGradient id="shG" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"   stop-color="#161620"/>
+              <stop offset="100%" stop-color="#12121c"/>
+            </linearGradient>
+            <linearGradient id="shB" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"   stop-color="#060410"/>
+              <stop offset="100%" stop-color="#060410"/>
+            </linearGradient>
+            <!-- Shackle highlight -->
+            <linearGradient id="shHi" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%"   stop-color="transparent"/>
+              <stop offset="35%"  stop-color="rgba(255,255,255,.22)"/>
+              <stop offset="52%"  stop-color="rgba(255,255,255,.32)"/>
+              <stop offset="70%"  stop-color="rgba(255,255,255,.22)"/>
+              <stop offset="100%" stop-color="transparent"/>
+            </linearGradient>
+            <!-- Body: dark graphite -->
+            <linearGradient id="bdG" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stop-color="#171525"/>
+              <stop offset="40%"  stop-color="#0e0c1c"/>
+              <stop offset="100%" stop-color="#08060f"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div><!-- /.pl-wrap -->
+
+      <!-- RIGHT CARDS -->
+      <div class="s2-cards-right" id="s2-cr">
+        <div class="s2-fcard">
+          <div class="s2-fcard-head">
+            <div class="s2-fcard-ico">🛡️</div>
+            <div class="s2-fcard-name">Alta Disponibilidade</div>
+          </div>
+          <div class="s2-fcard-desc">Infraestrutura robusta e monitorada 24/7.</div>
+        </div>
+        <div class="s2-fcard">
+          <div class="s2-fcard-head">
+            <div class="s2-fcard-ico">🔓</div>
+            <div class="s2-fcard-name">Sem Bloqueios Surpresas</div>
+          </div>
+          <div class="s2-fcard-desc">Sua operação sem retenção de saldo.</div>
+        </div>
+      </div>
+
+    </div><!-- /.s2-lock-zone -->
+
+    <!-- BOTTOM CONTENT -->
+    <div class="s2-bottom" id="s2-bottom">
+      <div class="s2-bh1">Seu dinheiro precisa circular.</div>
+      <div class="s2-bh2">Não ficar preso.</div>
+      <p class="s2-bp">Infraestrutura preparada para operações de alto volume com estabilidade e liquidez.</p>
+      <a href="https://wa.me/5547968711856" target="_blank" rel="noopener" class="s2-cta">FALAR COM NOSSO TIME &nbsp;→</a>
+    </div>
+
+  </div><!-- /.s2-content -->
+</section>
+
+<!-- ═══════════════════════════════════════
+     S3 — SEM AVISO DE PIX (BRANCO)
+═══════════════════════════════════════ -->
+<section id="s3">
+  <div class="s3-glow-tl"></div>
+  <div class="s3-glow-br"></div>
+  <div class="s3-inner">
+
+    <!-- ESQUERDA TOPO: headline -->
+    <div class="s3-left-top" data-reveal>
+      <div class="sec-eyebrow-p">SEM AVISO DE PIX</div>
+      <h2 class="sec-h2-dk">Sem alerta de golpe<br>no checkout.</h2>
+      <p class="sec-sub-dk">Atualizamos nominais constantemente para manter a operação limpa, estável e com maior conversão para seus sellers.</p>
+    </div>
+
+    <!-- DIREITA: phone animado -->
+    <div class="s3-right" data-reveal data-reveal-d="2">
+      <div class="s3-phone-stage" id="s3PhoneStage">
+
+        <!-- Card topo -->
+        <div class="s3-brand-card pbc-bad" id="s3BrandCard">
+          <div class="s3-pb-dot"></div>
+          <span id="s3BrandName">Outras sub-adquirentes</span>
+        </div>
+
+        <!-- Phone -->
+        <div class="s3-phone pbc-bad" id="s3Phone">
+          <div class="s3-phone-bar"></div>
+          <div class="s3-phone-screens">
+
+            <!-- Tela alerta -->
+            <div class="s3-pscr-alert" id="s3ScrAlert">
+              <div class="s3-pscr-ico">⚠️</div>
+              <div class="s3-pscr-title">Atenção: possível tentativa de golpe</div>
+              <div class="s3-pscr-body">Essa transação apresenta características de fraude. Confirme a identidade do destinatário.</div>
+              <div class="s3-pscr-div"></div>
+              <div class="s3-pscr-btn-cancel">Cancelar pagamento</div>
+              <div class="s3-pscr-btn-proc">Prosseguir mesmo assim</div>
+            </div>
+
+            <!-- Tela aprovado -->
+            <div class="s3-pscr-ok" id="s3ScrOk">
+              <div class="s3-pscr-check" id="s3Check">✓</div>
+              <div class="s3-pscr-ok-lbl">PIX Aprovado</div>
+              <div class="s3-pscr-ok-amt">R$ 3.847,00</div>
+              <div class="s3-pscr-ok-sub">Transação verificada</div>
+              <div class="s3-pscr-ok-badge">
+                <div class="s3-pscr-ok-blink"></div>
+                Sem alertas de risco
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Card base -->
+        <div class="s3-status-card pbc-bad" id="s3StatusCard">
+          <span id="s3StatusIco">⛔</span>
+          <span id="s3StatusText">Alerta de golpe gerado</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ESQUERDA BAIXO: chips (abaixo da animação no mobile) -->
+    <div class="s3-chips" data-reveal data-reveal-d="2">
+      <div class="s3-chip">
+        <div class="s3-chip-ico">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.2 10 11 3" stroke="#A466E8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        Nominais rotativas
+      </div>
+      <div class="s3-chip">
+        <div class="s3-chip-ico">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.2 10 11 3" stroke="#A466E8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        Menor incidência de alerta
+      </div>
+      <div class="s3-chip">
+        <div class="s3-chip-ico">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.2 10 11 3" stroke="#A466E8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        Melhor experiência de pagamento
+      </div>
+      <div class="s3-chip">
+        <div class="s3-chip-ico">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.2 10 11 3" stroke="#A466E8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        Conversão mais estável
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     S4 — DESVIO DE VENDAS (PRETO)
+═══════════════════════════════════════ -->
+<section id="s4">
+  <div class="s4-glow"></div>
+  <div class="s4-inner">
+
+    <!-- ESQUERDA TOPO: headline -->
+    <div class="s4-left-top" data-reveal>
+      <div class="sec-eyebrow-p2">TRANSPARÊNCIA OPERACIONAL</div>
+      <h2 class="sec-h2-lt">Venda paga é<br>venda entregue.</h2>
+      <p class="sec-sub-lt">Infraestrutura preparada para gateways que precisam operar com estabilidade, transparência e segurança operacional.</p>
+    </div>
+
+    <!-- DIREITA: fluxo linear Cliente→Métodos→Solution→Gateway -->
+    <div class="s4-right" data-reveal data-reveal-d="2">
+      <div class="s4-lflow-stage" id="s4LflowStage">
+        <svg class="s4-lflow-svg" viewBox="0 0 600 268">
+          <!-- Glows (atrás) -->
+          <path class="s4-fp-glow" d="M85,134 Q150,134 187,69"/>
+          <path class="s4-fp-glow" d="M85,134 L187,134"/>
+          <path class="s4-fp-glow" d="M85,134 Q150,134 187,199"/>
+          <path class="s4-fp-glow" d="M267,69 Q330,69 359,134"/>
+          <path class="s4-fp-glow" d="M267,134 L359,134"/>
+          <path class="s4-fp-glow" d="M267,199 Q330,199 359,134"/>
+          <path class="s4-fp-glow" d="M447,134 L505,134"/>
+          <!-- Linhas principais -->
+          <path class="s4-fp" d="M85,134 Q150,134 187,69"/>
+          <path class="s4-fp" d="M85,134 L187,134"/>
+          <path class="s4-fp" d="M85,134 Q150,134 187,199"/>
+          <path class="s4-fp" d="M267,69 Q330,69 359,134"/>
+          <path class="s4-fp" d="M267,134 L359,134"/>
+          <path class="s4-fp" d="M267,199 Q330,199 359,134"/>
+          <path class="s4-fp" d="M447,134 L505,134"/>
+        </svg>
+
+        <!-- Labels de passo -->
+        <div class="s4-slbl" id="s4lbl1" style="left:56px;top:8px;transform:translateX(-50%)">1. Compra iniciada</div>
+        <div class="s4-slbl" id="s4lbl2" style="left:227px;top:8px;transform:translateX(-50%)">2. Processando</div>
+        <div class="s4-slbl" id="s4lbl3" style="left:403px;top:8px;transform:translateX(-50%)">3. Repassando</div>
+        <div class="s4-slbl" id="s4lbl4" style="left:542px;top:8px;transform:translateX(-50%)">4. ✓ Entregue</div>
+
+        <!-- Cliente -->
+        <div class="s4-nd s4-nd-cliente">
+          <div class="s4-nd-box" id="s4box-cliente">👤</div>
+          <div class="s4-nd-lbl">Cliente</div>
+        </div>
+
+        <!-- Métodos de pagamento -->
+        <div class="s4-nd s4-nd-metodo s4-nd-pix">
+          <div class="s4-nd-box" id="s4box-pix"><span>🔑</span>PIX</div>
+        </div>
+        <div class="s4-nd s4-nd-metodo s4-nd-cartao">
+          <div class="s4-nd-box" id="s4box-cartao"><span>💳</span>Cartão</div>
+        </div>
+        <div class="s4-nd s4-nd-metodo s4-nd-boleto">
+          <div class="s4-nd-box" id="s4box-boleto"><span>📄</span>Boleto</div>
+        </div>
+
+        <!-- Solution hub -->
+        <div class="s4-nd s4-nd-solution">
+          <div class="s4-nd-box" id="s4box-solution">
+            <img src="logo sem fundo.png" style="width:32px;mix-blend-mode:screen;filter:brightness(1.6)" alt="">
+          </div>
+          <div class="s4-nd-lbl">Solution Payments</div>
+        </div>
+
+        <!-- Gateway -->
+        <div class="s4-nd s4-nd-gateway">
+          <div class="s4-nd-box" id="s4box-gateway">
+            <div class="s4-gw-ico">🏦</div>
+            Gateway
+            <div class="s4-gw-badge" id="s4gw-badge">✓</div>
+          </div>
+          <div class="s4-nd-lbl">Seu gateway</div>
+        </div>
+
+        <!-- Traveling dots -->
+        <div class="s4-tdot" id="s4dot1"></div>
+        <div class="s4-tdot" id="s4dot2"></div>
+        <div class="s4-tdot" id="s4dot3"></div>
+        <div class="s4-tdot" id="s4dot4"></div>
+      </div>
+
+      <!-- Stage VERTICAL (mobile) -->
+      <div class="s4-vflow-stage" id="s4VflowStage">
+        <svg class="s4-lflow-svg" viewBox="0 0 300 420">
+          <!-- Glows -->
+          <path class="s4-fp-glow" d="M150,84 Q100,113 50,142"/>
+          <path class="s4-fp-glow" d="M150,84 L150,142"/>
+          <path class="s4-fp-glow" d="M150,84 Q200,113 250,142"/>
+          <path class="s4-fp-glow" d="M50,178 Q50,220 150,236"/>
+          <path class="s4-fp-glow" d="M150,178 L150,236"/>
+          <path class="s4-fp-glow" d="M250,178 Q250,220 150,236"/>
+          <path class="s4-fp-glow" d="M150,324 L150,353"/>
+          <!-- Linhas -->
+          <path class="s4-fp" d="M150,84 Q100,113 50,142"/>
+          <path class="s4-fp" d="M150,84 L150,142"/>
+          <path class="s4-fp" d="M150,84 Q200,113 250,142"/>
+          <path class="s4-fp" d="M50,178 Q50,220 150,236"/>
+          <path class="s4-fp" d="M150,178 L150,236"/>
+          <path class="s4-fp" d="M250,178 Q250,220 150,236"/>
+          <path class="s4-fp" d="M150,324 L150,353"/>
+        </svg>
+        <!-- Cliente -->
+        <div class="s4-nd s4-vnd-cliente">
+          <div class="s4-nd-box" id="s4vbox-cliente">👤</div>
+          <div class="s4-nd-lbl">Cliente</div>
+        </div>
+        <!-- Métodos -->
+        <div class="s4-nd s4-nd-metodo s4-vnd-pix">
+          <div class="s4-nd-box" id="s4vbox-pix"><span>🔑</span>PIX</div>
+        </div>
+        <div class="s4-nd s4-nd-metodo s4-vnd-cartao">
+          <div class="s4-nd-box" id="s4vbox-cartao"><span>💳</span>Cartão</div>
+        </div>
+        <div class="s4-nd s4-nd-metodo s4-vnd-boleto">
+          <div class="s4-nd-box" id="s4vbox-boleto"><span>📄</span>Boleto</div>
+        </div>
+        <!-- Solution hub -->
+        <div class="s4-nd s4-vnd-solution">
+          <div class="s4-nd-box" id="s4vbox-solution">
+            <img src="logo sem fundo.png" style="width:32px;mix-blend-mode:screen;filter:brightness(1.6)" alt="">
+          </div>
+          <div class="s4-nd-lbl">Solution Payments</div>
+        </div>
+        <!-- Gateway -->
+        <div class="s4-nd s4-vnd-gateway">
+          <div class="s4-nd-box" id="s4vbox-gateway">
+            <div class="s4-gw-ico">🏦</div>
+            Gateway
+            <div class="s4-gw-badge" id="s4vgw-badge">✓</div>
+          </div>
+          <div class="s4-nd-lbl">Seu gateway</div>
+        </div>
+        <!-- Dots -->
+        <div class="s4-tdot" id="s4vdot1"></div>
+        <div class="s4-tdot" id="s4vdot2"></div>
+        <div class="s4-tdot" id="s4vdot3"></div>
+        <div class="s4-tdot" id="s4vdot4"></div>
+      </div>
+    </div>
+
+    <!-- ESQUERDA BAIXO: cards (abaixo da animação no mobile) -->
+    <div class="s4-cards" data-reveal data-reveal-d="2">
+      <div class="s4-card">
+        <div class="s4-card-ico">🔒</div>
+        <div class="s4-card-name">Sem desvio de vendas</div>
+        <div class="s4-card-desc">Cada transação chega ao destino correto.</div>
+      </div>
+      <div class="s4-card">
+        <div class="s4-card-ico">🔍</div>
+        <div class="s4-card-name">Processamento transparente</div>
+        <div class="s4-card-desc">Visibilidade total de cada operação.</div>
+      </div>
+      <div class="s4-card">
+        <div class="s4-card-ico">🎛️</div>
+        <div class="s4-card-name">Controle operacional</div>
+        <div class="s4-card-desc">Ferramentas de gestão em tempo real.</div>
+      </div>
+      <div class="s4-card">
+        <div class="s4-card-ico">🏗️</div>
+        <div class="s4-card-name">Estrutura estável</div>
+        <div class="s4-card-desc">Redundância e disponibilidade contínua.</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     S5 — MAIOR APROVAÇÃO (BRANCO)
+═══════════════════════════════════════ -->
+<section id="s5">
+  <div class="s5-glow"></div>
+  <div class="s5-inner">
+
+    <!-- ESQUERDA -->
+    <div data-reveal>
+      <div class="sec-eyebrow-p">PERFORMANCE OPERACIONAL</div>
+      <h2 class="sec-h2-dk">Maior aprovação.<br>Mais faturamento.</h2>
+      <p class="sec-sub-dk">Infraestrutura preparada para operações que precisam manter alta conversão mesmo em escala.</p>
+      <div class="s5-chips" data-reveal data-reveal-d="2">
+        <div class="s5-chip">
+          <div class="s5-chip-ico">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.2 10 11 3" stroke="#A466E8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          Múltiplas rotas
+        </div>
+        <div class="s5-chip">
+          <div class="s5-chip-ico">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.2 10 11 3" stroke="#A466E8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          Balanceamento inteligente
+        </div>
+        <div class="s5-chip">
+          <div class="s5-chip-ico">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.2 10 11 3" stroke="#A466E8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          Pix estável
+        </div>
+        <div class="s5-chip">
+          <div class="s5-chip-ico">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M2 6.5L5.2 10 11 3" stroke="#A466E8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          Alta disponibilidade
+        </div>
+      </div>
+    </div>
+
+    <!-- DIREITA: dashboard de aprovação -->
+    <div class="s5-right" data-reveal data-reveal-d="2">
+      <div class="s5-dash">
+        <div class="s5-dash-hd">
+          <div class="s5-dash-title">Taxa de Aprovação</div>
+          <div class="s5-dash-badge">↑ +18% este mês</div>
+        </div>
+        <div class="s5-bars" id="s5-bars">
+          <div class="s5-bar-col">
+            <div class="s5-bar-val">43%</div>
+            <div class="s5-bar-track"><div class="s5-bar" data-h="43"></div></div>
+            <div class="s5-bar-lbl" data-days-ago="5"></div>
+          </div>
+          <div class="s5-bar-col">
+            <div class="s5-bar-val">48%</div>
+            <div class="s5-bar-track"><div class="s5-bar" data-h="48"></div></div>
+            <div class="s5-bar-lbl" data-days-ago="4"></div>
+          </div>
+          <div class="s5-bar-col">
+            <div class="s5-bar-val">51%</div>
+            <div class="s5-bar-track"><div class="s5-bar" data-h="51"></div></div>
+            <div class="s5-bar-lbl" data-days-ago="3"></div>
+          </div>
+          <div class="s5-bar-col">
+            <div class="s5-bar-val">55%</div>
+            <div class="s5-bar-track"><div class="s5-bar" data-h="55"></div></div>
+            <div class="s5-bar-lbl" data-days-ago="2"></div>
+          </div>
+          <div class="s5-bar-col">
+            <div class="s5-bar-val">59%</div>
+            <div class="s5-bar-track"><div class="s5-bar" data-h="59"></div></div>
+            <div class="s5-bar-lbl" data-days-ago="1"></div>
+          </div>
+          <div class="s5-bar-col">
+            <div class="s5-bar-val">61%</div>
+            <div class="s5-bar-track"><div class="s5-bar hi" data-h="61"></div></div>
+            <div class="s5-bar-lbl" data-days-ago="0"></div>
+          </div>
+        </div>
+        <hr class="s5-line">
+        <div class="s5-mrow">
+          <div class="s5-met">
+            <div class="s5-mval">32</div>
+            <div class="s5-mlbl">Rotas ativas</div>
+          </div>
+          <div class="s5-met">
+            <div class="s5-mval">61%</div>
+            <div class="s5-mlbl">Aprovação de hoje</div>
+          </div>
+          <div class="s5-met">
+            <div class="s5-mval">99.9%</div>
+            <div class="s5-mlbl">Uptime</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     S6 — SUPORTE 24/7 (PRETO)
+═══════════════════════════════════════ -->
+<section id="s6">
+  <div class="s6-glow"></div>
+  <div class="s6-inner">
+
+    <!-- ESQUERDA -->
+    <div data-reveal>
+      <div class="sec-eyebrow-p2">SUPORTE CONTÍNUO</div>
+      <h2 class="sec-h2-lt">Suporte operacional<br>de verdade.</h2>
+      <p class="sec-sub-lt">Time disponível 24 horas para acompanhar sua estrutura e agir rapidamente quando necessário.</p>
+      <div class="s6-cards" data-reveal data-reveal-d="2">
+        <div class="s6-card">
+          <div class="s6-card-ico">👤</div>
+          <div class="s6-card-name">Atendimento humano</div>
+          <div class="s6-card-desc">Sempre uma pessoa real do outro lado.</div>
+        </div>
+        <div class="s6-card">
+          <div class="s6-card-ico">📡</div>
+          <div class="s6-card-name">Monitoramento contínuo</div>
+          <div class="s6-card-desc">Infraestrutura monitorada 24/7.</div>
+        </div>
+        <div class="s6-card">
+          <div class="s6-card-ico">⚡</div>
+          <div class="s6-card-name">Resposta rápida</div>
+          <div class="s6-card-desc">Atuação imediata em incidentes críticos.</div>
+        </div>
+        <div class="s6-card">
+          <div class="s6-card-ico">📊</div>
+          <div class="s6-card-name">Acompanhamento operacional</div>
+          <div class="s6-card-desc">Relatórios e visibilidade em tempo real.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIREITA: ops dashboard mockup -->
+    <div class="s6-right" data-reveal data-reveal-d="2">
+      <div class="s6-dash">
+        <div class="s6-dash-bar">
+          <div class="s6-dot"></div>
+          <div class="s6-dash-title">Central de Suporte</div>
+          <div class="s6-dash-live">● ONLINE 24/7</div>
+        </div>
+        <div class="s6-dash-body">
+          <div class="s6-chat" id="s6Chat">
+
+            <!-- 1: Seller pede troca -->
+            <div class="s6-msg" id="s6m1" style="opacity:0;transform:translateY(8px)">
+              <div class="s6-av cl">👤</div>
+              <div>
+                <div class="s6-bub cl">Deu uma baixada na aprovação aqui. Consegue trocar a nominal pra nós?</div>
+                <div class="s6-ts">agora</div>
+              </div>
+            </div>
+
+            <!-- typing 1 -->
+            <div class="s6-msg r" id="s6t1" style="opacity:0">
+              <div class="s6-av ag">S</div>
+              <div class="s6-typing-wrap"><span></span><span></span><span></span></div>
+            </div>
+
+            <!-- 2: Suporte confirma que vai alterar -->
+            <div class="s6-msg r" id="s6m2" style="opacity:0;transform:translateY(8px)">
+              <div class="s6-av ag">S</div>
+              <div>
+                <div class="s6-bub ag">Pode deixar, já vou alterar aqui pra vocês.</div>
+                <div class="s6-ts r">1 min · Lido</div>
+              </div>
+            </div>
+
+            <!-- typing 2 -->
+            <div class="s6-msg r" id="s6t2" style="opacity:0">
+              <div class="s6-av ag">S</div>
+              <div class="s6-typing-wrap"><span></span><span></span><span></span></div>
+            </div>
+
+            <!-- 3: Suporte confirma que já adicionou -->
+            <div class="s6-msg r" id="s6m3" style="opacity:0;transform:translateY(8px)">
+              <div class="s6-av ag">S</div>
+              <div>
+                <div class="s6-bub ag">Pronto, já adicionamos! Pode testar aí.</div>
+                <div class="s6-ts r">1 min</div>
+              </div>
+            </div>
+
+            <!-- 4: Seller agradece -->
+            <div class="s6-msg" id="s6m4" style="opacity:0;transform:translateY(8px)">
+              <div class="s6-av cl">👤</div>
+              <div>
+                <div class="s6-bub cl">Show, muito obrigado! 🙏</div>
+                <div class="s6-ts">2 min</div>
+              </div>
+            </div>
+
+            <!-- typing 3 -->
+            <div class="s6-msg r" id="s6t3" style="opacity:0">
+              <div class="s6-av ag">S</div>
+              <div class="s6-typing-wrap"><span></span><span></span><span></span></div>
+            </div>
+
+            <!-- 5: Suporte fecha com chave de ouro -->
+            <div class="s6-msg r" id="s6m5" style="opacity:0;transform:translateY(8px)">
+              <div class="s6-av ag">S</div>
+              <div>
+                <div class="s6-bub ag">Essa nominal é nova, vai aumentar bastante a conversão de vocês 🚀</div>
+                <div class="s6-ts r">2 min</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     S7 — PROVA SOCIAL (BRANCO)
+═══════════════════════════════════════ -->
+<section id="s7">
+  <div class="s7-glow"></div>
+  <div class="s7-inner">
+    <div data-reveal>
+      <div class="sec-eyebrow-p" style="display:block;text-align:center">INFRAESTRUTURA EM ESCALA</div>
+      <h2 class="sec-h2-dk" style="text-align:center;margin-top:4px">Estrutura utilizada por<br>operações que escalam.</h2>
+    </div>
+    <div class="s7-stats">
+      <div class="s7-stat" data-reveal data-reveal-d="1">
+        <div class="s7-ico">💰</div>
+        <div class="s7-val" data-count="128">+<em>128</em>M</div>
+        <div class="s7-lbl">processados via infraestrutura Solution</div>
+      </div>
+      <div class="s7-stat" data-reveal data-reveal-d="2">
+        <div class="s7-ico">🔀</div>
+        <div class="s7-val"><em>32</em></div>
+        <div class="s7-lbl">rotas ativas e monitoradas</div>
+      </div>
+      <div class="s7-stat" data-reveal data-reveal-d="3">
+        <div class="s7-ico">📈</div>
+        <div class="s7-val"><em>61</em>%</div>
+        <div class="s7-lbl">média de aprovação nas operações</div>
+      </div>
+      <div class="s7-stat" data-reveal data-reveal-d="4">
+        <div class="s7-ico">🕐</div>
+        <div class="s7-val"><em>24</em>/7</div>
+        <div class="s7-lbl">suporte operacional contínuo</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cabeçalho depoimentos -->
+  <div style="text-align:center;padding:64px 24px 0" data-reveal>
+    <div class="sec-eyebrow-p" style="display:inline-block">Depoimentos</div>
+    <h2 class="sec-h2-dk" style="margin-top:12px">Quem já usa <span style="color:var(--p)">não volta atrás</span></h2>
+    <p class="sec-sub-dk" style="margin-top:12px;max-width:480px;margin-left:auto;margin-right:auto">Gateways do mercado digital que escolheram escalar com a Solution Payments.</p>
+  </div>
+
+  <!-- Carrossel de depoimentos (full-width, fora do inner) -->
+  <div class="s7-testi">
+    <div class="s7-track-wrap">
+      <div class="s7-track">
+
+        <!-- SET 1 -->
+        <div class="s7-tcard" style="--rot:-2.5deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">Estávamos travados em 37% de aprovação no PIX. A Solution trocou a nominal em menos de 2 minutos e subimos pra 61% no mesmo dia. Resultado imediato.</p>
+          <div class="s7-tauthor">Rafael M.</div>
+          <div class="s7-trole">CTO</div>
+        </div>
+        <div class="s7-tcard" style="--rot:1.5deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">Às 2 da manhã do sábado, abri chamado por uma instabilidade. Em 4 minutos tinha um humano me respondendo e em 20 minutos estava resolvido. Nunca vi isso em outra sub.</p>
+          <div class="s7-tauthor">Fernanda L.</div>
+          <div class="s7-trole">Ops Lead</div>
+        </div>
+        <div class="s7-tcard" style="--rot:-1deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">A gente opera alto volume e qualquer queda de rota é prejuízo direto. Com a Solution, em 8 meses de operação não tivemos uma única parada não programada.</p>
+          <div class="s7-tauthor">Diego C.</div>
+          <div class="s7-trole">Diretor Comercial</div>
+        </div>
+        <div class="s7-tcard" style="--rot:2.8deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">Depois de migrar pra infraestrutura da Solution, nossa conversão no checkout subiu 18 pontos percentuais. Isso virou R$ 400k a mais por mês sem mudar nada no produto.</p>
+          <div class="s7-tauthor">Mariana S.</div>
+          <div class="s7-trole">CEO</div>
+        </div>
+        <div class="s7-tcard" style="--rot:-2deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">O que me impressionou foi o roteamento automático. Quando uma rota começa a cair, eles já estão redirecionando antes de eu perceber. Zero intervenção manual da nossa parte.</p>
+          <div class="s7-tauthor">Bruno T.</div>
+          <div class="s7-trole">Head de Tech</div>
+        </div>
+        <div class="s7-tcard" style="--rot:1deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">Saímos do zero ao primeiro PIX aprovado em menos de 48 horas. Integração limpa, documentação clara e alguém do lado técnico deles disponível o tempo todo.</p>
+          <div class="s7-tauthor">Camila R.</div>
+          <div class="s7-trole">CTO</div>
+        </div>
+        <div class="s7-tcard" style="--rot:-3deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">O que faz a diferença é a transparência. Tenho visibilidade em tempo real de cada rota, cada métrica. Não fico às cegas esperando relatório no final do dia.</p>
+          <div class="s7-tauthor">Lucas A.</div>
+          <div class="s7-trole">COO</div>
+        </div>
+        <div class="s7-tcard" style="--rot:2deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">Eles conhecem a nossa operação de verdade. Não é suporte ticket. É um time que entende o nosso negócio e sugere ativamente o que vai melhorar nossa performance.</p>
+          <div class="s7-tauthor">Thiago V.</div>
+          <div class="s7-trole">Fundador</div>
+        </div>
+
+        <!-- SET 2 (duplicata para loop infinito) -->
+        <div class="s7-tcard" style="--rot:-2.5deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">Estávamos travados em 37% de aprovação no PIX. A Solution trocou a nominal em menos de 2 minutos e subimos pra 61% no mesmo dia. Resultado imediato.</p>
+          <div class="s7-tauthor">Rafael M.</div>
+          <div class="s7-trole">CTO</div>
+        </div>
+        <div class="s7-tcard" style="--rot:1.5deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">Às 2 da manhã do sábado, abri chamado por uma instabilidade. Em 4 minutos tinha um humano me respondendo e em 20 minutos estava resolvido. Nunca vi isso em outra sub.</p>
+          <div class="s7-tauthor">Fernanda L.</div>
+          <div class="s7-trole">Ops Lead</div>
+        </div>
+        <div class="s7-tcard" style="--rot:-1deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">A gente opera alto volume e qualquer queda de rota é prejuízo direto. Com a Solution, em 8 meses de operação não tivemos uma única parada não programada.</p>
+          <div class="s7-tauthor">Diego C.</div>
+          <div class="s7-trole">Diretor Comercial</div>
+        </div>
+        <div class="s7-tcard" style="--rot:2.8deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">Depois de migrar pra infraestrutura da Solution, nossa conversão no checkout subiu 18 pontos percentuais. Isso virou R$ 400k a mais por mês sem mudar nada no produto.</p>
+          <div class="s7-tauthor">Mariana S.</div>
+          <div class="s7-trole">CEO</div>
+        </div>
+        <div class="s7-tcard" style="--rot:-2deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">O que me impressionou foi o roteamento automático. Quando uma rota começa a cair, eles já estão redirecionando antes de eu perceber. Zero intervenção manual da nossa parte.</p>
+          <div class="s7-tauthor">Bruno T.</div>
+          <div class="s7-trole">Head de Tech</div>
+        </div>
+        <div class="s7-tcard" style="--rot:1deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">Saímos do zero ao primeiro PIX aprovado em menos de 48 horas. Integração limpa, documentação clara e alguém do lado técnico deles disponível o tempo todo.</p>
+          <div class="s7-tauthor">Camila R.</div>
+          <div class="s7-trole">CTO</div>
+        </div>
+        <div class="s7-tcard" style="--rot:-3deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">O que faz a diferença é a transparência. Tenho visibilidade em tempo real de cada rota, cada métrica. Não fico às cegas esperando relatório no final do dia.</p>
+          <div class="s7-tauthor">Lucas A.</div>
+          <div class="s7-trole">COO</div>
+        </div>
+        <div class="s7-tcard" style="--rot:2deg">
+          <div class="s7-tquote">"</div>
+          <p class="s7-ttext">Eles conhecem a nossa operação de verdade. Não é suporte ticket. É um time que entende o nosso negócio e sugere ativamente o que vai melhorar nossa performance.</p>
+          <div class="s7-tauthor">Thiago V.</div>
+          <div class="s7-trole">Fundador</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</section>
+
+<!-- ═══════════════════════════════════════
+     S8 — FAQ (PRETO)
+═══════════════════════════════════════ -->
+<section id="s8">
+  <div class="s8-glow"></div>
+  <div class="s8-inner">
+    <div class="s8-hd" data-reveal>
+      <div class="sec-eyebrow-p2">DÚVIDAS FREQUENTES</div>
+      <h2 class="sec-h2-lt">Perguntas frequentes.</h2>
+    </div>
+    <div class="faq-list" data-reveal data-reveal-d="1">
+
+      <div class="faq-item">
+        <button class="faq-btn" aria-expanded="false">
+          <span class="faq-qtext">Trabalham com high-risk?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-body">
+          <div class="faq-ans">Sim. Nossa infraestrutura é projetada para operações de alto volume e maior complexidade, incluindo verticais que exigem robustez e estabilidade diferenciadas. Conversamos sobre o seu modelo e avaliamos juntos o melhor encaixe.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-btn" aria-expanded="false">
+          <span class="faq-qtext">Possuem múltiplas rotas?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-body">
+          <div class="faq-ans">Sim. Mantemos 32+ rotas ativas com balanceamento inteligente, garantindo que cada transação percorra o caminho com maior probabilidade de aprovação. Isso reduz quedas de conversão causadas por instabilidade de um único provedor.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-btn" aria-expanded="false">
+          <span class="faq-qtext">Existe retenção de saldo?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-body">
+          <div class="faq-ans">Não. A Solution Payments opera com foco em liquidez e transparência. Sua operação não fica com saldo retido sem justificativa. Qualquer movimentação financeira é devidamente comunicada com antecedência.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-btn" aria-expanded="false">
+          <span class="faq-qtext">Como funciona o onboarding?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-body">
+          <div class="faq-ans">O processo é rápido e assistido. Após o contato inicial, nosso time faz uma análise técnica da sua estrutura atual e propõe a integração mais adequada. A maioria das operações entra em produção em poucos dias úteis.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-btn" aria-expanded="false">
+          <span class="faq-qtext">Possuem saque D+0?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-body">
+          <div class="faq-ans">Sim. Trabalhamos com liquidez diária para operações qualificadas. O prazo e a modalidade de saque são definidos com base no perfil operacional de cada cliente durante o processo de onboarding.</div>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-btn" aria-expanded="false">
+          <span class="faq-qtext">Trabalham com gateways?</span>
+          <span class="faq-ico">+</span>
+        </button>
+        <div class="faq-body">
+          <div class="faq-ans">Sim. Nossa infraestrutura é voltada especialmente para gateways que precisam de estabilidade, múltiplas rotas e suporte operacional dedicado. Temos experiência com integrações técnicas de diferentes portes e complexidades.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     S9 — CTA FINAL (BRANCO)
+═══════════════════════════════════════ -->
+<section id="s9">
+  <div class="s9-glow-l"></div>
+  <div class="s9-glow-r"></div>
+  <div class="s9-inner" data-reveal>
+    <h2 class="s9-h">Estrutura preparada para gateways que querem <em>escalar com estabilidade.</em></h2>
+    <p class="s9-sub">Fale com nosso time e descubra como aumentar sua aprovação, liquidez e estabilidade operacional.</p>
+    <a href="https://wa.me/5547968711856" target="_blank" rel="noopener" class="s9-btn">
+      FALAR COM O TIME &nbsp;→
+    </a>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════ -->
+<footer id="site-footer">
+
+  <!-- Bloco principal -->
+  <div class="footer-main">
+
+    <!-- Marca -->
+    <div class="footer-brand">
+      <img src="LOGO SOLUTION.png" alt="Solution Payments" class="footer-logo">
+      <p class="footer-desc">Infraestrutura de pagamentos para gateways que precisam operar com estabilidade, alta aprovação e suporte de verdade.</p>
+      <div class="footer-status">
+        <span class="footer-status-dot"></span>
+        Todos os sistemas operacionais
+      </div>
+    </div>
+
+    <!-- Produto -->
+    <div>
+      <div class="footer-col-title">Produto</div>
+      <nav class="footer-col-links">
+        <a href="#s4" class="footer-col-link">Como funciona</a>
+        <a href="#s3" class="footer-col-link">Rotas e nominals</a>
+        <a href="#s9" class="footer-col-link">Integrações</a>
+        <a href="#s9" class="footer-col-link">API</a>
+      </nav>
+    </div>
+
+    <!-- Empresa -->
+    <div>
+      <div class="footer-col-title">Empresa</div>
+      <nav class="footer-col-links">
+        <a href="sobre.html" class="footer-col-link">Sobre nós</a>
+        <a href="#s7" class="footer-col-link">Cases</a>
+        <a href="#s9" class="footer-col-link">Contato</a>
+        <a href="#s9" class="footer-col-link">WhatsApp</a>
+      </nav>
+    </div>
+
+    <!-- Suporte -->
+    <div>
+      <div class="footer-col-title">Suporte</div>
+      <nav class="footer-col-links">
+        <a href="#s8" class="footer-col-link">FAQ</a>
+        <a href="#s9" class="footer-col-link">Documentação</a>
+        <a href="#s9" class="footer-col-link">Status</a>
+        <a href="privacidade.html" class="footer-col-link">Política de privacidade</a>
+      </nav>
+    </div>
+
+  </div>
+
+  <!-- Barra inferior -->
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 Solution Payments. Todos os direitos reservados.</span>
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+      <a href="termos-de-uso.html" style="font-size:12px;color:rgba(255,255,255,.22);text-decoration:none;transition:color .2s" onmouseover="this.style.color='rgba(255,255,255,.55)'" onmouseout="this.style.color='rgba(255,255,255,.22)'">Termos de Uso</a>
+      <a href="privacidade.html" style="font-size:12px;color:rgba(255,255,255,.22);text-decoration:none;transition:color .2s" onmouseover="this.style.color='rgba(255,255,255,.55)'" onmouseout="this.style.color='rgba(255,255,255,.22)'">Privacidade</a>
+      <a href="kyc.html" style="font-size:12px;color:rgba(255,255,255,.22);text-decoration:none;transition:color .2s" onmouseover="this.style.color='rgba(255,255,255,.55)'" onmouseout="this.style.color='rgba(255,255,255,.22)'">KYC</a>
+      <a href="pld-ft.html" style="font-size:12px;color:rgba(255,255,255,.22);text-decoration:none;transition:color .2s" onmouseover="this.style.color='rgba(255,255,255,.55)'" onmouseout="this.style.color='rgba(255,255,255,.22)'">PLD/FT</a>
+    </div>
+  </div>
+
+</footer>
+
+<!-- GSAP -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/MotionPathPlugin.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+gsap.registerPlugin(MotionPathPlugin, ScrollTrigger);
+
+/* ══════════════════════════════════════════════
+   1. SCALE vis-wrap TO FIT hero-right
+══════════════════════════════════════════════ */
+const heroRight = document.getElementById('hero-right');
+const visWrap   = document.getElementById('vis-wrap');
+
+function scaleVis() {
+  const rw = heroRight.offsetWidth;
+  const rh = heroRight.offsetHeight;
+  const sx = rw / 800;
+  const sy = rh / 560;
+  /* no mobile não amplia além do fit — evita overflow horizontal */
+  const mult = rw < 769 ? 0.98 : 1.1;
+  const s  = Math.min(sx, sy) * mult;
+  const ox = (rw - 800 * s) / 2;
+  const oy = (rh - 560 * s) / 2;
+  visWrap.style.transform = `translate(${ox}px,${oy}px) scale(${s})`;
+}
+scaleVis();
+window.addEventListener('resize', scaleVis);
+
+/* ══════════════════════════════════════════════
+   2. ANIMATED CANVAS BACKGROUND
+══════════════════════════════════════════════ */
+const canvas = document.getElementById('bg-canvas');
+const ctx    = canvas.getContext('2d');
+const CW = 800, CH = 560;
+const HUB_CX = 400, HUB_CY = 268; /* hub center — chip 450px */
+
+/* Background particles */
+const PARTICLES = Array.from({length:70}, () => ({
+  x : Math.random() * CW,
+  y : HUB_CY + Math.random() * (CH - HUB_CY + 60),
+  r : Math.random() * 1.6 + 0.3,
+  a : Math.random() * 0.22 + 0.04,
+  vx: (Math.random() - 0.5) * 0.15,
+  vy: (Math.random() - 0.5) * 0.12,
+  ph: Math.random() * Math.PI * 2,
+  ps: Math.random() * 0.025 + 0.01,
+}));
+
+/* Static circuit traces (drawn every frame but unchanged) */
+const TRACES = [
+  {x:HUB_CX-188,y:HUB_CY+65,  w:68,  v:false},
+  {x:HUB_CX+ 94,y:HUB_CY+52,  w:54,  v:false},
+  {x:HUB_CX- 84,y:HUB_CY+118, w:84,  v:false},
+  {x:HUB_CX+124,y:HUB_CY+100, w:60,  v:false},
+  {x:HUB_CX-228,y:HUB_CY+154, w:46,  v:false},
+  {x:HUB_CX+168,y:HUB_CY+142, w:70,  v:false},
+  {x:HUB_CX- 52,y:HUB_CY+185, w:76,  v:false},
+  {x:HUB_CX+ 54,y:HUB_CY+215, w:50,  v:false},
+  {x:HUB_CX-143,y:HUB_CY+ 80, h:58,  v:true },
+  {x:HUB_CX+178,y:HUB_CY+ 68, h:48,  v:true },
+];
+
+let raf_frame = 0;
+
+function drawFrame() {
+  raf_frame++;
+  ctx.clearRect(0, 0, CW, CH);
+
+  /* ── Dark radial base ── */
+  const bg = ctx.createRadialGradient(HUB_CX, HUB_CY+80, 0, HUB_CX, HUB_CY+80, CW*0.78);
+  bg.addColorStop(0,   'rgba(48,14,95,.24)');
+  bg.addColorStop(0.4, 'rgba(16,6,42,.14)');
+  bg.addColorStop(1,   'rgba(4,2,10,0)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, CW, CH);
+
+  /* ── Perspective rays from hub center ── */
+  for (let i = 0; i <= 24; i++) {
+    const t = i / 24;
+    const angle = Math.PI * 0.5 + t * Math.PI * 1.0; /* half-circle downward */
+    const ex = HUB_CX + Math.cos(angle) * CW * 1.9;
+    const ey = HUB_CY + Math.sin(angle) * CH * 1.5;
+    ctx.beginPath();
+    ctx.moveTo(HUB_CX, HUB_CY);
+    ctx.lineTo(ex, ey);
+    ctx.strokeStyle = `rgba(164,102,232,${0.032 + 0.018 * Math.sin(Math.PI * t)})`;
+    ctx.lineWidth = 0.55;
+    ctx.stroke();
+  }
+
+  /* ── Ellipse depth rings ── */
+  for (let i = 1; i <= 9; i++) {
+    const rx = (i / 9) * CW * 0.6;
+    const ry = (i / 9) * CH * 0.26;
+    const a  = 0.06 * Math.pow(1 - i/11, 1.6);
+    ctx.beginPath();
+    ctx.ellipse(HUB_CX, HUB_CY + CH * 0.08, rx, ry, 0, 0, Math.PI*2);
+    ctx.strokeStyle = `rgba(164,102,232,${a})`;
+    ctx.lineWidth = 0.65;
+    ctx.stroke();
+  }
+
+  /* ── Circuit traces ── */
+  TRACES.forEach(({x,y,w,h,v}) => {
+    ctx.beginPath();
+    if (v) { ctx.moveTo(x,y); ctx.lineTo(x,y+h); }
+    else   { ctx.moveTo(x,y); ctx.lineTo(x+w,y); }
+    ctx.strokeStyle = 'rgba(164,102,232,.1)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    const pts = v ? [{x,y},{x,y:y+h}] : [{x,y},{x:x+w,y}];
+    pts.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,2.2,0,Math.PI*2);
+      ctx.fillStyle = 'rgba(164,102,232,.28)';
+      ctx.fill();
+    });
+  });
+
+  /* ── Hub central glow (animated breathe — maior e mais suave) ── */
+  const glowA = 0.30 + 0.14 * Math.sin(raf_frame * 0.022);
+  const hg = ctx.createRadialGradient(HUB_CX, HUB_CY, 0, HUB_CX, HUB_CY, 300);
+  hg.addColorStop(0,    `rgba(164,102,232,${glowA})`);
+  hg.addColorStop(0.25, `rgba(164,102,232,${glowA*0.55})`);
+  hg.addColorStop(0.55, `rgba(164,102,232,${glowA*0.15})`);
+  hg.addColorStop(1,    'rgba(0,0,0,0)');
+  ctx.fillStyle = hg;
+  ctx.fillRect(0,0,CW,CH);
+
+  /* ── Animated floor particles ── */
+  PARTICLES.forEach(p => {
+    p.x  += p.vx; p.y += p.vy; p.ph += p.ps;
+    if (p.x < 0)  p.x = CW;
+    if (p.x > CW) p.x = 0;
+    if (p.y < HUB_CY - 20) p.y = CH;
+    if (p.y > CH) p.y = HUB_CY;
+    const a = p.a * (0.55 + 0.45 * Math.sin(p.ph));
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(164,102,232,${a})`;
+    ctx.fill();
+  });
+
+  requestAnimationFrame(drawFrame);
+}
+drawFrame();
+
+/* ══════════════════════════════════════════════
+   3. ANIMAÇÃO — estilo referência:
+      tudo entra junto em ~1s, depois float
+      paralaxe contínuo em cada elemento
+══════════════════════════════════════════════ */
+
+/* Estado inicial — tudo invisível com offset direcional */
+gsap.set(['#hd','#sb','#cta','#badges','#metrics'], {opacity:0, y:22});
+gsap.set('#vis-hub',  {opacity:0, y:36, scale:.88, transformOrigin:'50% 50%'});
+gsap.set('#vn1', {opacity:0, x:-28, y:-14});
+gsap.set('#vn2', {opacity:0, x: 28, y:-14});
+gsap.set('#vn3', {opacity:0, x: 14,  y: 28});
+gsap.set('#vn4', {opacity:0, x:  0,  y:-20});
+gsap.set('#vc-vol', {opacity:0, x:-22, y:-18});
+gsap.set('#vc-apv', {opacity:0, x: 22, y:-18});
+gsap.set('#vc-pay', {opacity:0, x:-22,  y: 18});
+gsap.set('#vc-rts', {opacity:0, x: 22,  y: 18});
+gsap.set('.lg', {opacity:0});
+
+/* ── ENTRADA SEQUENCIAL por par: linha + elemento (~6s) ──
+   Hub entra primeiro. Depois cada linha aparece junto com
+   o node ou card que ela conecta — 1 par por vez. */
+const intro = gsap.timeline({defaults:{ease:'power3.out'}});
+
+const PAIR_GAP   = 0.22; /* intervalo entre pares — acelerado */
+const PAIR_DUR   = 0.30; /* duração de cada fade-in */
+const PAIR_START = 0.55; /* 1º par começa cedo */
+
+/* 0s — Hub entra rápido */
+intro.to('#vis-hub',
+  {opacity:1, y:0, scale:1, duration:0.55, ease:'back.out(1.6)'}, 0);
+
+/* Painel esquerdo — entra em paralelo com os pares */
+intro.to('#hd',      {opacity:1, y:0, duration:0.5}, 0.10);
+intro.to('#sb',      {opacity:1, y:0, duration:0.5}, 0.40);
+intro.to('#cta',     {opacity:1, y:0, duration:0.5}, 0.70);
+intro.to('#badges',  {opacity:1, y:0, duration:0.5}, 1.00);
+intro.to('#metrics', {opacity:1, y:0, duration:0.5}, 1.30);
+
+/* Par 1 — l1 + vn1 (banco esquerdo) */
+intro.to('#l1',     {opacity:1, duration:PAIR_DUR}, PAIR_START + PAIR_GAP*0);
+intro.to('#vn1',    {opacity:1, x:0, y:0, duration:PAIR_DUR, ease:'back.out(1.8)'}, PAIR_START + PAIR_GAP*0);
+
+/* Par 2 — l2 + vc-vol (card Volume) */
+intro.to('#l2',     {opacity:1, duration:PAIR_DUR}, PAIR_START + PAIR_GAP*1);
+intro.to('#vc-vol', {opacity:1, x:0, y:0, duration:PAIR_DUR, ease:'power3.out'}, PAIR_START + PAIR_GAP*1);
+
+/* Par 3 — l3 + vc-apv (card Aprovada) */
+intro.to('#l3',     {opacity:1, duration:PAIR_DUR}, PAIR_START + PAIR_GAP*2);
+intro.to('#vc-apv', {opacity:1, x:0, y:0, duration:PAIR_DUR, ease:'power3.out'}, PAIR_START + PAIR_GAP*2);
+
+/* Par 4 — l4 + vn2 (banco direito) */
+intro.to('#l4',     {opacity:1, duration:PAIR_DUR}, PAIR_START + PAIR_GAP*3);
+intro.to('#vn2',    {opacity:1, x:0, y:0, duration:PAIR_DUR, ease:'back.out(1.8)'}, PAIR_START + PAIR_GAP*3);
+
+/* Par 5 — l5 + vc-rts (card Rotas) */
+intro.to('#l5',     {opacity:1, duration:PAIR_DUR}, PAIR_START + PAIR_GAP*4);
+intro.to('#vc-rts', {opacity:1, x:0, y:0, duration:PAIR_DUR, ease:'power3.out'}, PAIR_START + PAIR_GAP*4);
+
+/* Par 6 — l6 + vc-pay (card Pagamento) */
+intro.to('#l6',     {opacity:1, duration:PAIR_DUR}, PAIR_START + PAIR_GAP*5);
+intro.to('#vc-pay', {opacity:1, x:0, y:0, duration:PAIR_DUR, ease:'power3.out'}, PAIR_START + PAIR_GAP*5);
+
+/* Par 7 — l7 + vn3 (globo) */
+intro.to('#l7',     {opacity:1, duration:PAIR_DUR}, PAIR_START + PAIR_GAP*6);
+intro.to('#vn3',    {opacity:1, x:0, y:0, duration:PAIR_DUR, ease:'back.out(1.8)'}, PAIR_START + PAIR_GAP*6);
+
+/* Par 8 — l8 + vn4 (ícone cartão) */
+intro.to('#l8',     {opacity:1, duration:PAIR_DUR}, PAIR_START + PAIR_GAP*7);
+intro.to('#vn4',    {opacity:1, x:0, y:0, duration:PAIR_DUR, ease:'back.out(1.8)'}, PAIR_START + PAIR_GAP*7);
+/* Fim: 0.55 + 0.22×7 + 0.30 ≈ 2.4s → entrada completa em ~3s */
+
+/* ── IDLE: TUDO flutua junto — chip, linhas, cards, nodes, glow ── */
+const IDLE_HUB  = 0.6;   /* hub começa a flutuar logo após entrar */
+const IDLE_REST = 3.0;   /* resto flutua após entrada completa */
+
+/* Float unificado: wrapper único — tudo se move em perfeita sincronia */
+gsap.to('#vis-float', {y:-18, duration:4.2, repeat:-1, yoyo:true, ease:'sine.inOut', delay:IDLE_HUB});
+
+/* Pulsar opacidade das linhas */
+gsap.to('.lg',
+  {opacity:.82, duration:2.8, repeat:-1, yoyo:true, ease:'sine.inOut', delay:IDLE_REST+.3});
+
+/* Pulse rings — após hub entrar */
+setTimeout(() => {
+  document.getElementById('hr1').classList.add('go');
+  document.getElementById('hr2').classList.add('go');
+}, IDLE_HUB * 1000);
+
+/* Hub glow breathe — valores pequenos, sem cutoff */
+gsap.to('#hub-img', {
+  filter: 'drop-shadow(0 0 22px rgba(164,102,232,1))',
+  duration: 2.6, repeat:-1, yoyo:true, ease:'sine.inOut', delay:IDLE_HUB
+});
+
+/* ── DOTS contínuos — loop eterno, 1 por linha, fade in/out ── */
+function loopDot(dotId, lineId, dur, startDelay) {
+  const dot  = document.getElementById(dotId);
+  const path = document.querySelector('#' + lineId + ' path:nth-child(3)');
+  function run() {
+    const tl = gsap.timeline({onComplete: run});
+    tl.set(dot, {opacity: 0});
+    /* fade in + inicio do percurso */
+    tl.to(dot, {
+      opacity: 1,
+      motionPath: {path, start: 0, end: 0.12, autoRotate: false},
+      duration: dur * 0.12, ease: 'none'
+    });
+    /* trecho central */
+    tl.to(dot, {
+      motionPath: {path, start: 0.12, end: 0.88, autoRotate: false},
+      duration: dur * 0.76, ease: 'none'
+    });
+    /* fade out + fim do percurso */
+    tl.to(dot, {
+      opacity: 0,
+      motionPath: {path, start: 0.88, end: 1, autoRotate: false},
+      duration: dur * 0.12, ease: 'none'
+    });
+  }
+  setTimeout(run, startDelay * 1000);
+}
+
+/* Cada dot começa logo após sua linha aparecer na entrada */
+loopDot('da',  'l1', 2.4, PAIR_START + PAIR_GAP*0 + 0.4);
+loopDot('db',  'l2', 2.8, PAIR_START + PAIR_GAP*1 + 0.4);
+loopDot('dc',  'l3', 2.6, PAIR_START + PAIR_GAP*2 + 0.4);
+loopDot('dd',  'l4', 2.5, PAIR_START + PAIR_GAP*3 + 0.4);
+loopDot('de',  'l5', 2.2, PAIR_START + PAIR_GAP*4 + 0.4);
+loopDot('df',  'l6', 2.3, PAIR_START + PAIR_GAP*5 + 0.4);
+loopDot('dg2', 'l7', 2.7, PAIR_START + PAIR_GAP*6 + 0.4);
+loopDot('dh',  'l8', 2.9, PAIR_START + PAIR_GAP*7 + 0.4);
+
+/* No mobile a mesma animação do desktop roda normalmente —
+   o scaleVis() já ajusta a vis-wrap para caber em 300px de altura */
+
+/* ── Métricas: fade-in + contadores ── */
+gsap.to('#metrics', {opacity:1, duration:0.8, delay:0.4, ease:'power2.out'});
+
+setTimeout(() => {
+  countUp('met-txn', 0, 128.4, 4, v => '+' + v.toFixed(1) + 'mil');
+  countUp('met-apv', 0, 61,   4, v => Math.round(v) + '%');
+  countUp('met-rts', 0, 32,   4, v => Math.round(v));
+}, 400);
+
+/* ══════════════════════════════════════════════
+   4. CARD COUNTER + CHART ANIMATIONS
+══════════════════════════════════════════════ */
+
+/* Formata valor em BRL: 5780.9 → "R$ 5.780,90" */
+function fmtBRL(v) {
+  const s = v.toFixed(2);
+  const [int, dec] = s.split('.');
+  return 'R$ ' + int.replace(/\B(?=(\d{3})+(?!\d))/g, '.') + ',' + dec;
+}
+
+/* Anima número de from→to num elemento */
+function countUp(id, from, to, dur, fmt) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const obj = {v: from};
+  gsap.to(obj, {
+    v: to, duration: dur, ease: 'power2.out',
+    onUpdate: () => { el.textContent = fmt(obj.v); }
+  });
+}
+
+/* Anima o gráfico do card Vol: sobe de baixo até a linha real */
+function animateChart() {
+  const lineEl = document.getElementById('chart-line');
+  const fillEl = document.getElementById('chart-fill');
+  if (!lineEl || !fillEl) return;
+  const xs   = [0, 18, 36, 55, 74, 92, 110, 129, 148];
+  const yTgt = [31, 25, 28, 20, 15,  8,  12,   4,   2];
+  const obj  = {p: 0};
+  gsap.to(obj, {
+    p: 1, duration: 5, ease: 'power1.out',
+    onUpdate: () => {
+      const pts = xs.map((x, i) => {
+        const y = 36 + (yTgt[i] - 36) * obj.p;
+        return `${x},${y.toFixed(1)}`;
+      }).join(' L');
+      lineEl.setAttribute('d', 'M' + pts);
+      fillEl.setAttribute('d', 'M' + pts + ' L148,36 L0,36Z');
+    }
+  });
+}
+
+/* Cada animação dispara no instante em que o card aparece */
+const t = pair => (PAIR_START + PAIR_GAP * pair) * 1000;
+
+setTimeout(() => { countUp('vol-pct', 0, 62,      5, v => '+' + Math.round(v) + '%'); animateChart(); }, t(1));
+setTimeout(() => { countUp('apv-val', 0, 5780.90, 5, fmtBRL); }, t(2));
+setTimeout(() => { countUp('rts-num', 0, 32,      5, v => Math.round(v)); },            t(4));
+setTimeout(() => { countUp('pay-val', 0, 2450,    5, fmtBRL); },                        t(5));
+
+/* ══════════════════════════════════════════════
+   5. SECTION 2 — CINEMATIC PADLOCK STORY
+══════════════════════════════════════════════ */
+
+/* ── Set initial states ── */
+gsap.set('#s2-a',      { opacity:0, y:18 });
+gsap.set('#s2-sub',    { opacity:0, y:14 });
+gsap.set('#s2-cl',     { opacity:0, x:-50 });
+gsap.set('#s2-cr',     { opacity:0, x:50 });
+gsap.set('#s2-bottom', { opacity:0, y:28 });
+gsap.set('#pl-burst',  { opacity:0 });
+gsap.set('#s2-routes', { opacity:0 });
+gsap.set(['#pl-h1','#pl-h2','#pl-h3'], { opacity:0, scale:0.3, transformOrigin:'center center' });
+
+/* ── Canvas background for s2 ── */
+(function() {
+  const canvas = document.getElementById('s2c');
+  if (!canvas) return;
+  const ctx  = canvas.getContext('2d');
+  const pts  = [];
+  const N    = 100;
+
+  function resize() {
+    canvas.width  = canvas.offsetWidth  || window.innerWidth;
+    canvas.height = canvas.offsetHeight || window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for (let i = 0; i < N; i++) {
+    pts.push({
+      x:  Math.random(),
+      y:  Math.random(),
+      r:  Math.random() * 1.6 + 0.2,
+      vy: -(Math.random() * 0.00012 + 0.00004),
+      op: Math.random() * 0.45 + 0.05,
+      ph: Math.random() * Math.PI * 2
+    });
+  }
+
+  function draw(ts) {
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    const bg = ctx.createRadialGradient(w/2, h*.42, 0, w/2, h*.42, w * .65);
+    bg.addColorStop(0,   'rgba(60,18,110,.1)');
+    bg.addColorStop(0.5, 'rgba(25,8,55,.05)');
+    bg.addColorStop(1,   'transparent');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, w, h);
+
+    pts.forEach(p => {
+      p.y += p.vy;
+      if (p.y < -0.02) { p.y = 1.02; p.x = Math.random(); }
+      const a = p.op * (0.55 + 0.45 * Math.sin(ts * 0.0007 + p.ph));
+      ctx.beginPath();
+      ctx.arc(p.x * w, p.y * h, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(164,102,232,${a.toFixed(2)})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+
+/* ── Main cinematic ScrollTrigger ── */
+(function() {
+  let shakeDone = false;
+
+  /* ── Shake: vibrate the closed padlock image ── */
+  function doShake() {
+    const lock = document.getElementById('pl-closed');
+    const gr   = document.getElementById('pl-gr');
+    if (!lock) return;
+
+    gsap.fromTo(gr, { scale:1, opacity:.35 },
+      { scale:2, opacity:1, duration:.13, yoyo:true, repeat:9,
+        ease:'none', transformOrigin:'center center' });
+
+    gsap.to(lock, {
+      keyframes:[
+        {x:-6,  duration:.07},
+        {x:9,   duration:.07},
+        {x:-14, duration:.07},
+        {x:14,  duration:.07},
+        {x:-18, duration:.07},
+        {x:18,  duration:.07},
+        {x:-14, duration:.07},
+        {x:14,  duration:.07},
+        {x:-8,  duration:.07},
+        {x:6,   duration:.07},
+        {x:0,   duration:.14}
+      ],
+      ease:'none'
+    });
+  }
+
+
+  /* ── Build main timeline ── */
+  const tl = gsap.timeline();
+
+  /* Phase 0–2: Tension build — glow ring pulses */
+  tl.to('#pl-gr', { scale:1.35, opacity:.55, duration:1, ease:'sine.inOut' }, 0)
+    .to('#pl-gr', { scale:1,    opacity:.32, duration:1, ease:'sine.inOut' }, 1)
+    .to('#pl-gr', { scale:1.6,  opacity:.8,  duration:1, ease:'sine.inOut' }, 1.8);
+
+  /* Phase 3–4.5: UNLOCK — Blur + Foco (F)
+     Fechado desfoca e some, aberto começa borrado
+     e vai ganhando nitidez                          */
+  tl.to('#pl-closed', { filter:'blur(18px)', opacity:0, scale:1.06, duration:.55, ease:'power2.in' }, 3.0)
+    .fromTo('#pl-open',
+      { filter:'blur(18px)', opacity:0, scale:.92 },
+      { filter:'blur(0px)',  opacity:1, scale:1, duration:.7, ease:'power2.out',
+        onComplete: () => {
+          document.getElementById('pl-open').classList.add('lock-floating');
+        }
+      }, 3.35)
+
+    /* Burst explosion */
+    .to('#pl-burst',  { opacity:1, duration:.1 }, 3.1)
+    .to('#bc',        { attr:{ r:260 }, opacity:.95, duration:.5, ease:'power3.out' }, 3.1)
+    .to('#bc',        { opacity:0, duration:.8,  ease:'power2.in' }, 3.6)
+    .to('#br',        { opacity:1, duration:.2 }, 3.15)
+    .to('#br',        { opacity:0, scale:1.5, duration:1.0,
+                        transformOrigin:'350px 350px', ease:'power1.out' }, 3.45)
+
+    /* Halo rings expand */
+    .to('#pl-h1', { opacity:.85, scale:1, duration:.7, ease:'power2.out',
+                    transformOrigin:'center center' }, 3.25)
+    .to('#pl-h2', { opacity:.5,  scale:1, duration:.9, ease:'power2.out',
+                    transformOrigin:'center center' }, 3.4)
+    .to('#pl-h3', { opacity:.25, scale:1, duration:1.1, ease:'power2.out',
+                    transformOrigin:'center center' }, 3.55)
+
+    /* Route lines draw — usando classes para animar as 4 camadas neon de cada rota */
+    .to('#s2-routes',  { opacity:1, duration:.4 }, 3.35)
+    .to('.rg1', { strokeDashoffset:0, duration:1.4, ease:'power2.out' }, 3.45)
+    .to('.rg3', { strokeDashoffset:0, duration:1.4, ease:'power2.out' }, 3.57)
+    .to('.rg2', { strokeDashoffset:0, duration:1.3, ease:'power2.out' }, 3.6)
+    .to('.rg4', { strokeDashoffset:0, duration:1.3, ease:'power2.out' }, 3.72)
+    .to('.rg5', { strokeDashoffset:0, duration:1.0, ease:'power2.out' }, 3.75)
+    .to('.rg6', { strokeDashoffset:0, duration:1.0, ease:'power2.out' }, 3.85);
+
+  /* Phase 4.5–5.8: Title swap — s2-q permanece visível */
+  tl.to('#s2-a',   { opacity:1, y:0,   duration:.9, ease:'power3.out' }, 4.9)
+    .to('#s2-sub', { opacity:1, y:0,   duration:.8, ease:'power2.out' }, 5.4);
+
+  /* Phase 5.8–7: Feature cards fly in */
+  tl.to('#s2-cl', { opacity:1, x:0, duration:.9, ease:'power3.out' }, 5.8)
+    .to('#s2-cr', { opacity:1, x:0, duration:.9, ease:'power3.out' }, 6.0)
+    .to('.s2-fcard', { opacity:1, stagger:.18, duration:.5, ease:'power2.out' }, 6.2);
+
+  /* Phase 7–8.5: Bottom CTA */
+  tl.to('#s2-bottom', { opacity:1, y:0, duration:1.1, ease:'power3.out' }, 7.0);
+
+  /* ── Pin + scrub ── */
+  /* Dots viajantes nas rotas — loop fade-in → percurso → fade-out */
+  function loopRouteDot(dotId, routeClass, dur, startDelay) {
+    const dot  = document.getElementById(dotId);
+    const path = document.querySelector('#s2-routes g:nth-child(3) path.' + routeClass);
+    if (!dot || !path) return;
+    function run() {
+      const tl = gsap.timeline({onComplete: run});
+      tl.set(dot, {opacity:0});
+      tl.to(dot, {opacity:1, motionPath:{path, start:0,    end:0.12, autoRotate:false}, duration:dur*0.12, ease:'none'});
+      tl.to(dot, {           motionPath:{path, start:0.12, end:0.88, autoRotate:false}, duration:dur*0.76, ease:'none'});
+      tl.to(dot, {opacity:0, motionPath:{path, start:0.88, end:1,    autoRotate:false}, duration:dur*0.12, ease:'none'});
+    }
+    setTimeout(run, startDelay * 1000);
+  }
+
+  let dotsStarted = false;
+  ScrollTrigger.create({
+    trigger: '#s2',
+    start:   'top top',
+    end:     '+=875',
+    pin:     true,
+    scrub:   1.8,
+    anticipatePin: 1,
+    animation: tl,
+    onUpdate: (self) => {
+      if (self.progress >= 0.28 && !shakeDone) {
+        shakeDone = true;
+        doShake();
+      }
+      /* Inicia dots viajantes após as linhas estarem desenhadas */
+      if (self.progress >= 0.46 && !dotsStarted) {
+        dotsStarted = true;
+        loopRouteDot('rd1', 'rg1', 3.2, 0.0);
+        loopRouteDot('rd2', 'rg2', 3.8, 0.6);
+        loopRouteDot('rd3', 'rg3', 3.0, 1.1);
+        loopRouteDot('rd4', 'rg4', 3.6, 0.3);
+        loopRouteDot('rd5', 'rg5', 2.8, 0.8);
+        loopRouteDot('rd6', 'rg6', 3.4, 1.4);
+      }
+    }
+  });
+})();
+</script>
+
+<script>
+/* ══════════════════════════════════════════
+   NOVAS SEÇÕES — animações e interações
+══════════════════════════════════════════ */
+
+/* 0. S3 Phone Animation */
+(function(){
+  const phone      = document.getElementById('s3Phone');
+  const brandCard  = document.getElementById('s3BrandCard');
+  const brandName  = document.getElementById('s3BrandName');
+  const statusCard = document.getElementById('s3StatusCard');
+  const statusIco  = document.getElementById('s3StatusIco');
+  const statusText = document.getElementById('s3StatusText');
+  const scrAlert   = document.getElementById('s3ScrAlert');
+  const scrOk      = document.getElementById('s3ScrOk');
+  const check      = document.getElementById('s3Check');
+  if(!phone) return;
+
+  const FADE_MS    = 380;
+  const PAUSE_BAD  = 2500;
+  const PAUSE_GOOD = 2800;
+  /* Só os cards fazem fade — o celular permanece sempre visível */
+  const CARDS      = [brandCard, statusCard];
+  const ALL_TRANS  = [phone, brandCard, statusCard];
+
+  /* Aplica conteúdo de "estado ruim" instantaneamente (sem transição) */
+  function setBad(){
+    ALL_TRANS.forEach(el=>{ el.style.transition='none'; });
+    void phone.offsetWidth;
+    phone.className      = 's3-phone pbc-bad';
+    brandCard.className  = 's3-brand-card pbc-bad';
+    statusCard.className = 's3-status-card pbc-bad';
+    brandName.textContent   = 'Outras sub-adquirentes';
+    statusIco.textContent   = '⛔';
+    statusText.textContent  = 'Alerta de golpe gerado';
+    scrAlert.style.transition= 'none';
+    scrAlert.style.opacity   = '0';
+    scrAlert.style.transform = 'none';
+    scrOk.style.transition   = 'none';
+    scrOk.style.opacity      = '0';
+    check.style.transition   = 'none';
+    check.style.transform    = 'scale(.5)';
+    requestAnimationFrame(()=>{ ALL_TRANS.forEach(el=>{ el.style.transition=''; }); });
+  }
+
+  /* Aplica conteúdo de "estado bom" instantaneamente (sem transição) */
+  function setGood(){
+    ALL_TRANS.forEach(el=>{ el.style.transition='none'; });
+    void phone.offsetWidth;
+    phone.className      = 's3-phone pbc-good';
+    brandCard.className  = 's3-brand-card pbc-good';
+    statusCard.className = 's3-status-card pbc-good';
+    brandName.textContent   = 'Solution Payments';
+    statusIco.textContent   = '✅';
+    statusText.textContent  = 'Pix aprovado, sem alertas';
+    requestAnimationFrame(()=>{ ALL_TRANS.forEach(el=>{ el.style.transition=''; }); });
+  }
+
+  function fadeOut(){ CARDS.forEach(el=>{ el.style.opacity='0'; }); }
+  function fadeIn(){  CARDS.forEach(el=>{ el.style.opacity='1'; }); }
+
+  function runCycle(){
+    /* Conteúdo já está bad + cards em opacity:0 (do loop anterior ou início) */
+    setBad();
+    /* Aguarda 1 frame para transitions serem re-habilitadas, então fade in dos cards */
+    setTimeout(()=>{
+      fadeIn();
+      /* Fade in rápido da tela de alerta ao entrar no estado ruim */
+      scrAlert.style.transition = 'opacity .18s ease-out';
+      scrAlert.style.opacity    = '1';
+      /* Após PAUSE_BAD: fade out tela de alerta + tudo */
+      setTimeout(()=>{
+        scrAlert.style.transition = 'opacity .45s ease-out, transform .45s ease-out';
+        scrAlert.style.opacity    = '0';
+        scrAlert.style.transform  = 'translateY(-14px) scale(.96)';
+        fadeOut();
+        /* Após fade: troca para estado good e fade in */
+        setTimeout(()=>{
+          setGood();
+          setTimeout(()=>{
+            fadeIn();
+            /* Mostra tela de aprovado */
+            setTimeout(()=>{
+              scrOk.style.transition = 'opacity .5s ease-out';
+              scrOk.style.opacity    = '1';
+              setTimeout(()=>{
+                check.style.transition = 'transform .55s cubic-bezier(.34,1.56,.64,1)';
+                check.style.transform  = 'scale(1)';
+              }, 150);
+            }, 120);
+            /* Após PAUSE_GOOD: fade out e reinicia */
+            setTimeout(()=>{
+              fadeOut();
+              setTimeout(runCycle, FADE_MS);
+            }, PAUSE_GOOD);
+          }, 16);
+        }, FADE_MS);
+      }, PAUSE_BAD);
+    }, 16);
+  }
+
+  const stage = document.getElementById('s3PhoneStage');
+  let started = false;
+  const io = new IntersectionObserver((entries)=>{
+    if(entries[0].isIntersecting && !started){
+      started = true;
+      CARDS.forEach(el=>{ el.style.opacity='0'; });
+      runCycle();
+      io.disconnect();
+    }
+  }, { threshold: 0.3 });
+  io.observe(stage);
+})();
+
+/* 1. S6 Chat animation */
+(function(){
+  const chat = document.getElementById('s6Chat');
+  if(!chat) return;
+
+  const msgs   = ['s6m1','s6m2','s6m3','s6m4','s6m5'].map(id=>document.getElementById(id));
+  const typs   = ['s6t1','s6t2','s6t3'].map(id=>document.getElementById(id));
+
+  function reset(){
+    msgs.forEach(el=>{ el.style.transition='none'; el.style.opacity='0'; el.style.transform='translateY(8px)'; });
+    typs.forEach(el=>{ el.style.transition='none'; el.style.opacity='0'; });
+  }
+
+  /* Mostra uma bolha de mensagem */
+  function show(el, cb){
+    el.style.transition='opacity .28s ease-out, transform .28s ease-out';
+    el.style.opacity='1';
+    el.style.transform='translateY(0)';
+    if(cb) setTimeout(cb, 300);
+  }
+
+  /* Mostra typing, espera dur ms, esconde e chama cb */
+  function type(el, dur, cb){
+    el.style.transition='opacity .2s ease-out';
+    el.style.opacity='1';
+    setTimeout(()=>{
+      el.style.opacity='0';
+      setTimeout(cb, 220);
+    }, dur);
+  }
+
+  function run(){
+    reset();
+    /* t=0   seller aparece */
+    setTimeout(()=> show(msgs[0], ()=>{
+      /* t+800 typing 1 → 1.4s → msg suporte 1 */
+      setTimeout(()=> type(typs[0], 1400, ()=>
+        show(msgs[1], ()=>{
+          /* t+700 typing 2 → 1.2s → msg suporte 2 */
+          setTimeout(()=> type(typs[1], 1200, ()=>
+            show(msgs[2], ()=>{
+              /* t+900 seller agradece */
+              setTimeout(()=> show(msgs[3], ()=>{
+                /* t+700 typing 3 → 1.6s → msg suporte 3 */
+                setTimeout(()=> type(typs[2], 1600, ()=>
+                  show(msgs[4], ()=>{
+                    /* pausa e reinicia */
+                    setTimeout(run, 5000);
+                  })
+                ), 700);
+              }), 900);
+            })
+          ), 700);
+        })
+      ), 800);
+    }), 400);
+  }
+
+  let started=false;
+  const io=new IntersectionObserver((e)=>{
+    if(e[0].isIntersecting&&!started){started=true;run();io.disconnect();}
+  },{threshold:0.3});
+  io.observe(chat);
+})();
+
+/* 2. Reveal on scroll */
+(function(){
+  const els = document.querySelectorAll('[data-reveal]');
+  if(!els.length) return;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){
+        e.target.classList.add('is-visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  els.forEach(el => io.observe(el));
+})();
+
+/* 3. FAQ accordion */
+(function(){
+  document.querySelectorAll('.faq-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const body = item.querySelector('.faq-body');
+      const isOpen = item.classList.contains('open');
+      /* Fechar todos */
+      document.querySelectorAll('.faq-item.open').forEach(i => {
+        i.classList.remove('open');
+        i.querySelector('.faq-body').style.maxHeight = '0';
+        i.querySelector('.faq-btn').setAttribute('aria-expanded','false');
+      });
+      if(!isOpen){
+        item.classList.add('open');
+        body.style.maxHeight = body.scrollHeight + 'px';
+        btn.setAttribute('aria-expanded','true');
+      }
+    });
+  });
+})();
+
+/* 3. Gráfico de barras S5 — labels de data dinâmicos + animação */
+(function(){
+  const barsEl = document.getElementById('s5-bars');
+  if(!barsEl) return;
+
+  /* Preenche labels: hoje à direita, 1 dia a menos por barra à esquerda */
+  const fmt = d => (d.getDate()+'').padStart(2,'0')+'/'+((''+( d.getMonth()+1)).padStart(2,'0'));
+  barsEl.querySelectorAll('.s5-bar-lbl[data-days-ago]').forEach(lbl => {
+    const ago = parseInt(lbl.getAttribute('data-days-ago'));
+    const d = new Date();
+    d.setDate(d.getDate() - ago);
+    lbl.textContent = ago === 0 ? 'Hoje' : fmt(d);
+  });
+
+  function animateBars(){
+    barsEl.querySelectorAll('.s5-bar').forEach(bar => {
+      const pct = parseFloat(bar.getAttribute('data-h')) || 0;
+      bar.style.height = (pct / 70 * 100) + '%';
+    });
+  }
+
+  let animated = false;
+  const io = new IntersectionObserver((entries) => {
+    if(entries[0].isIntersecting && !animated){
+      animated = true;
+      animateBars();
+      io.disconnect();
+    }
+  }, { threshold: 0.05 });
+  io.observe(barsEl);
+})();
+
+/* 4. S4 linear flow animation */
+(function(){
+  const stage = document.getElementById('s4LflowStage');
+  if(!stage) return;
+
+  function qbez(p0,cp,p1,t){const mt=1-t;return{x:mt*mt*p0.x+2*mt*t*cp.x+t*t*p1.x,y:mt*mt*p0.y+2*mt*t*cp.y+t*t*p1.y}}
+  function lerp(p0,p1,t){return{x:p0.x+(p1.x-p0.x)*t,y:p0.y+(p1.y-p0.y)*t}}
+
+  const PATHS={
+    'cp': t=>qbez({x:85,y:134},{x:150,y:134},{x:187,y:69},t),
+    'cc': t=>lerp({x:85,y:134},{x:187,y:134},t),
+    'cb': t=>qbez({x:85,y:134},{x:150,y:134},{x:187,y:199},t),
+    'ps': t=>qbez({x:267,y:69},{x:330,y:69},{x:359,y:134},t),
+    'cs': t=>lerp({x:267,y:134},{x:359,y:134},t),
+    'bs': t=>qbez({x:267,y:199},{x:330,y:199},{x:359,y:134},t),
+    'sg': t=>lerp({x:447,y:134},{x:505,y:134},t),
+  };
+
+  let timers=[];
+  function clr(){timers.forEach(clearTimeout);timers=[]}
+
+  function pulse(id){const b=document.getElementById(id);b.classList.remove('s4-pulse','s4-confirm');void b.offsetWidth;b.classList.add('s4-pulse')}
+  function ok(id){const b=document.getElementById(id);b.classList.remove('s4-pulse','s4-confirm');void b.offsetWidth;b.classList.add('s4-confirm')}
+  function showLbl(id){document.getElementById(id).classList.add('show')}
+  function hideLbl(id){document.getElementById(id).classList.remove('show')}
+
+  function animDot(dotId,pathKey,dur,onEnd){
+    const dot=document.getElementById(dotId);
+    dot.style.opacity='1';
+    const start=performance.now();
+    const fn=PATHS[pathKey];
+    function tick(now){
+      const t=Math.min(1,(now-start)/dur);
+      const pos=fn(t);
+      dot.style.left=pos.x+'px';
+      dot.style.top=pos.y+'px';
+      if(t<1){requestAnimationFrame(tick)}else{dot.style.opacity='0';onEnd&&onEnd()}
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function resetFlow(){
+    clr();
+    ['s4box-cliente','s4box-pix','s4box-cartao','s4box-boleto','s4box-solution','s4box-gateway'].forEach(id=>{
+      const b=document.getElementById(id);
+      b.classList.remove('s4-pulse','s4-confirm');
+      b.style.borderColor='';b.style.boxShadow='';
+    });
+    document.getElementById('s4gw-badge').classList.remove('show');
+    ['s4lbl1','s4lbl2','s4lbl3','s4lbl4'].forEach(hideLbl);
+    ['s4dot1','s4dot2','s4dot3','s4dot4'].forEach(id=>{document.getElementById(id).style.opacity='0'});
+  }
+
+  function startFlow(){
+    resetFlow();
+    /* Fase 1 — cliente→métodos */
+    pulse('s4box-cliente');
+    showLbl('s4lbl1');
+    animDot('s4dot1','cp',600,()=>{pulse('s4box-pix')});
+    timers.push(setTimeout(()=>animDot('s4dot2','cc',500,()=>{pulse('s4box-cartao')}),200));
+    timers.push(setTimeout(()=>animDot('s4dot3','cb',600,()=>{pulse('s4box-boleto')}),400));
+    /* Fase 2 — métodos→solution */
+    timers.push(setTimeout(()=>{
+      showLbl('s4lbl2');
+      animDot('s4dot1','ps',700,()=>{});
+      timers.push(setTimeout(()=>animDot('s4dot2','cs',550,()=>{}),150));
+      timers.push(setTimeout(()=>animDot('s4dot3','bs',700,()=>{pulse('s4box-solution')}),300));
+    },900));
+    /* Fase 3 — solution→gateway */
+    timers.push(setTimeout(()=>{
+      showLbl('s4lbl3');
+      animDot('s4dot4','sg',650,()=>{
+        ok('s4box-gateway');
+        document.getElementById('s4gw-badge').classList.add('show');
+        showLbl('s4lbl4');
+      });
+    },2000));
+    timers.push(setTimeout(startFlow,4200));
+  }
+
+  let started=false;
+  const io=new IntersectionObserver((entries)=>{
+    if(entries[0].isIntersecting&&!started){started=true;startFlow();io.disconnect()}
+  },{threshold:0.25});
+  io.observe(stage);
+})();
+
+/* 5. S4 vertical flow animation (mobile) */
+(function(){
+  const stage = document.getElementById('s4VflowStage');
+  if(!stage) return;
+
+  function qbez(p0,cp,p1,t){const mt=1-t;return{x:mt*mt*p0.x+2*mt*t*cp.x+t*t*p1.x,y:mt*mt*p0.y+2*mt*t*cp.y+t*t*p1.y}}
+  function lerp(p0,p1,t){return{x:p0.x+(p1.x-p0.x)*t,y:p0.y+(p1.y-p0.y)*t}}
+
+  const VPATHS={
+    'cp': t=>qbez({x:150,y:84},{x:100,y:113},{x:50,y:142},t),
+    'cc': t=>lerp({x:150,y:84},{x:150,y:142},t),
+    'cb': t=>qbez({x:150,y:84},{x:200,y:113},{x:250,y:142},t),
+    'ps': t=>qbez({x:50,y:178},{x:50,y:220},{x:150,y:236},t),
+    'cs': t=>lerp({x:150,y:178},{x:150,y:236},t),
+    'bs': t=>qbez({x:250,y:178},{x:250,y:220},{x:150,y:236},t),
+    'sg': t=>lerp({x:150,y:324},{x:150,y:353},t),
+  };
+
+  let timers=[];
+  function clr(){timers.forEach(clearTimeout);timers=[]}
+
+  function pulse(id){const b=document.getElementById(id);b.classList.remove('s4-pulse','s4-confirm');void b.offsetWidth;b.classList.add('s4-pulse')}
+  function ok(id){const b=document.getElementById(id);b.classList.remove('s4-pulse','s4-confirm');void b.offsetWidth;b.classList.add('s4-confirm')}
+
+  function animDot(dotId,pathKey,dur,onEnd){
+    const dot=document.getElementById(dotId);
+    dot.style.opacity='1';
+    const start=performance.now();
+    const fn=VPATHS[pathKey];
+    function tick(now){
+      const t=Math.min(1,(now-start)/dur);
+      const pos=fn(t);
+      dot.style.left=pos.x+'px';
+      dot.style.top=pos.y+'px';
+      if(t<1){requestAnimationFrame(tick)}else{dot.style.opacity='0';onEnd&&onEnd()}
+    }
+    requestAnimationFrame(tick);
+  }
+
+  function resetFlow(){
+    clr();
+    ['s4vbox-cliente','s4vbox-pix','s4vbox-cartao','s4vbox-boleto','s4vbox-solution','s4vbox-gateway'].forEach(id=>{
+      const b=document.getElementById(id);
+      b.classList.remove('s4-pulse','s4-confirm');
+      b.style.borderColor='';b.style.boxShadow='';
+    });
+    document.getElementById('s4vgw-badge').classList.remove('show');
+    ['s4vdot1','s4vdot2','s4vdot3','s4vdot4'].forEach(id=>{document.getElementById(id).style.opacity='0'});
+  }
+
+  function startFlow(){
+    resetFlow();
+    pulse('s4vbox-cliente');
+    animDot('s4vdot1','cp',600,()=>{pulse('s4vbox-pix')});
+    timers.push(setTimeout(()=>animDot('s4vdot2','cc',500,()=>{pulse('s4vbox-cartao')}),200));
+    timers.push(setTimeout(()=>animDot('s4vdot3','cb',600,()=>{pulse('s4vbox-boleto')}),400));
+    timers.push(setTimeout(()=>{
+      animDot('s4vdot1','ps',700,()=>{});
+      timers.push(setTimeout(()=>animDot('s4vdot2','cs',550,()=>{}),150));
+      timers.push(setTimeout(()=>animDot('s4vdot3','bs',700,()=>{pulse('s4vbox-solution')}),300));
+    },900));
+    timers.push(setTimeout(()=>{
+      animDot('s4vdot4','sg',650,()=>{
+        ok('s4vbox-gateway');
+        document.getElementById('s4vgw-badge').classList.add('show');
+      });
+    },2000));
+    timers.push(setTimeout(startFlow,4200));
+  }
+
+  let started=false;
+  const io=new IntersectionObserver((entries)=>{
+    if(entries[0].isIntersecting&&!started){started=true;startFlow();io.disconnect()}
+  },{threshold:0.2});
+  io.observe(stage);
+})();
+
+/* ── ClickSpark — efeito de faísca no clique ── */
+(function(){
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:99999';
+  document.body.appendChild(canvas);
+  const ctx = canvas.getContext('2d');
+
+  const CFG = {
+    color:      '#A466E8',
+    size:       10,
+    radius:     22,
+    count:      8,
+    duration:   500,
+    extraScale: 1.0
+  };
+
+  let sparks = [];
+
+  function resize(){
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function easeOut(t){ return t * (2 - t); }
+
+  function draw(ts){
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    sparks = sparks.filter(s => {
+      const elapsed = ts - s.t0;
+      if(elapsed >= CFG.duration) return false;
+      const p  = easeOut(elapsed / CFG.duration);
+      const d  = p * CFG.radius * CFG.extraScale;
+      const ll = CFG.size * (1 - p);
+      const x1 = s.x + d * Math.cos(s.a);
+      const y1 = s.y + d * Math.sin(s.a);
+      const x2 = s.x + (d + ll) * Math.cos(s.a);
+      const y2 = s.y + (d + ll) * Math.sin(s.a);
+      ctx.strokeStyle = CFG.color;
+      ctx.lineWidth   = 2;
+      ctx.globalAlpha = 1 - p * 0.4;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+      return true;
+    });
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+
+  document.addEventListener('click', e => {
+    const now = performance.now();
+    for(let i = 0; i < CFG.count; i++){
+      sparks.push({
+        x: e.clientX,
+        y: e.clientY,
+        a: (2 * Math.PI * i) / CFG.count,
+        t0: now
+      });
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
